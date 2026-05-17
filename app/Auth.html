@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Training Platform — Sign in</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['Geist Mono', 'ui-monospace', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --bg: oklch(0.992 0.004 95);
+    --bg-warm: oklch(0.975 0.012 88);
+    --ink: oklch(0.22 0.012 80);
+    --ink-soft: oklch(0.46 0.012 80);
+    --ink-mute: oklch(0.66 0.010 80);
+    --line: oklch(0.92 0.006 85);
+    --line-strong: oklch(0.85 0.008 85);
+    --accent: oklch(0.62 0.14 155);
+    --accent-ink: oklch(0.32 0.10 155);
+    --accent-tint: oklch(0.95 0.04 155);
+    --danger: oklch(0.58 0.18 25);
+    --danger-tint: oklch(0.96 0.04 25);
+  }
+  html, body, #root { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* shadcn-ish input */
+  .tp-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14.5px;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    outline: none;
+  }
+  .tp-input::placeholder { color: var(--ink-mute); }
+  .tp-input:hover { border-color: var(--line-strong); }
+  .tp-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+  }
+  .tp-input[aria-invalid="true"] {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger) 14%, transparent);
+  }
+
+  /* primary CTA */
+  .tp-btn-primary {
+    width: 100%;
+    height: 44px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14.5px;
+    letter-spacing: -0.005em;
+    transition: transform .08s ease, background .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 1px 2px rgba(0,0,0,.08);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .tp-btn-primary:hover:not(:disabled) { background: oklch(0.30 0.012 80); }
+  .tp-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+  .tp-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .tp-btn-ghost {
+    height: 44px;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .tp-btn-ghost:hover { border-color: var(--line-strong); background: oklch(0.985 0.005 88); }
+
+  /* Tab toggle */
+  .tp-tabs {
+    display: inline-flex;
+    background: oklch(0.96 0.006 88);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 3px;
+    position: relative;
+  }
+  .tp-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 7px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: color .2s ease;
+  }
+  .tp-tab[data-active="true"] { color: var(--ink); }
+  .tp-tab-thumb {
+    position: absolute;
+    top: 3px; bottom: 3px;
+    background: #fff;
+    border-radius: 7px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 0.5px rgba(0,0,0,.04);
+    transition: left .28s cubic-bezier(.4,.0,.15,1), width .28s cubic-bezier(.4,.0,.15,1);
+  }
+
+  /* Brand panel decorative grid */
+  .tp-grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--ink) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--ink) 5%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, #000 40%, transparent 100%);
+  }
+
+  /* Topic chip */
+  .tp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    letter-spacing: -0.01em;
+    transition: transform .25s ease, border-color .25s ease;
+  }
+  .tp-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .tp-chip-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
+
+  /* Field hint */
+  .tp-hint {
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: -0.005em;
+  }
+  .tp-error {
+    font-size: 12px;
+    color: var(--danger);
+    letter-spacing: -0.005em;
+    margin-top: 4px;
+  }
+
+  .tp-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    letter-spacing: -0.005em;
+  }
+
+  /* mastery ring animation */
+  @keyframes tp-fill { from { stroke-dashoffset: var(--from); } to { stroke-dashoffset: var(--to); } }
+  .tp-ring-progress {
+    transform: rotate(-90deg);
+    transform-origin: center;
+    animation: tp-fill 1.4s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  /* form slide-in */
+  @keyframes tp-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .tp-rise { animation: tp-rise .35s cubic-bezier(.2,.7,.2,1) both; }
+
+  /* error banner */
+  .tp-banner {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--danger-tint);
+    border: 1px solid color-mix(in oklch, var(--danger) 22%, transparent);
+    color: oklch(0.42 0.15 25);
+    font-size: 13px;
+    letter-spacing: -0.005em;
+  }
+  .tp-banner-success {
+    background: var(--accent-tint);
+    border-color: color-mix(in oklch, var(--accent) 25%, transparent);
+    color: var(--accent-ink);
+  }
+
+  /* link */
+  .tp-link {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklch, var(--ink) 25%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color .15s;
+  }
+  .tp-link:hover { text-decoration-color: var(--ink); }
+
+  /* Subtle warmth glow on the brand panel */
+  .tp-glow {
+    background:
+      radial-gradient(ellipse 80% 50% at 30% 20%, color-mix(in oklch, var(--accent) 14%, transparent), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 90%, color-mix(in oklch, var(--accent) 8%, transparent), transparent 60%);
+  }
+
+  /* Wordmark glyph */
+  .tp-mark {
+    width: 28px; height: 28px;
+    background: var(--ink);
+    color: oklch(0.99 0.01 90);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Geist Mono', monospace;
+    font-weight: 600; font-size: 14px; letter-spacing: -0.04em;
+  }
+
+  /* Strike-thru divider */
+  .tp-divider {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink-mute); font-size: 12px;
+  }
+  .tp-divider::before, .tp-divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--line);
+  }
+
+  /* password strength bar */
+  .tp-strength {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .tp-strength i {
+    flex: 1; height: 3px; border-radius: 999px;
+    background: oklch(0.93 0.006 85);
+    transition: background .25s ease;
+  }
+  .tp-strength i[data-on="true"] { background: var(--accent); }
+
+  /* hide brand panel on narrow */
+  @media (max-width: 900px) {
+    .tp-brand-panel { display: none; }
+    .tp-form-pane { padding: 32px 20px; }
+  }
+</style>
+
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="auth-brand-panel.jsx"></script>
+  <script type="text/babel" src="auth-form.jsx"></script>
+  <script type="text/babel" src="auth-app.jsx"></script>
+</body>
+</html>
