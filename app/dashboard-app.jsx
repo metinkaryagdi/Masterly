@@ -78,13 +78,12 @@ function App() {
   const [apiOnline, setApiOnline] = useSt(t.demoMode ? 'demo' : null);
   const [toast, setToast] = useSt(null);
 
-  // Stub a user if there's nothing in localStorage (demo path).
+  // No valid user means we got here without going through Auth.html — bounce
+  // back instead of fabricating a stub (which used to mask broken sign-in
+  // flows and write fake JWTs into localStorage).
   useEf(() => {
     if (!user) {
-      const stub = { userId: 'demo', displayName: 'Ada Lovelace', email: 'ada@training.dev' };
-      localStorage.setItem('training_user', JSON.stringify(stub));
-      localStorage.setItem('training_token', 'demo.eyJzdWIiOiJkZW1vIn0.signature');
-      setUser(stub);
+      window.location.replace('Auth.html');
     }
   }, []);
 

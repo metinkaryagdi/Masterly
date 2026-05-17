@@ -79,15 +79,24 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseHttpsRedirection();
+
+// CORS must run before HTTPS redirect, otherwise a cross-origin preflight
+// from an http://localhost frontend gets redirected to https:// and the
+// browser drops the request without seeing the CORS headers.
+app.UseCors(DevCorsPolicy);
+
+// HTTPS redirect is fine in production but in dev it forces the frontend
+// (which calls http://localhost:5000) onto https and breaks the dev loop.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Training Platform API v1");
 });
-
-app.UseCors(DevCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();

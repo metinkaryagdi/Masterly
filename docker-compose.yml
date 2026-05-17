@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: training-db
+    environment:
+      POSTGRES_DB: training_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - training_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d training_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: src/TrainingPlatform.Api/Dockerfile
+    container_name: training-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=training_platform;Username=postgres;Password=postgres"
+      Jwt__SecretKey: "dev-only-please-replace-with-a-32+-char-secret-in-prod"
+      Jwt__Issuer: "TrainingPlatform"
+      Jwt__Audience: "TrainingPlatform.Client"
+      Jwt__ExpiryMinutes: "120"
+    ports:
+      - "5000:5000"
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: training-web
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  training_pgdata:

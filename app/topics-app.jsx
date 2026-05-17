@@ -322,13 +322,10 @@ function App() {
   const [selectedId, setSelectedId] = tS(null);
   const [apiOnline, setApiOnline] = tS(t.demoMode ? 'demo' : null);
 
-  // Stub user if missing
+  // No valid user means we landed here without auth — go back to sign in.
   tE(() => {
     if (!localStorage.getItem('training_user')) {
-      localStorage.setItem('training_user', JSON.stringify({
-        userId: 'demo', displayName: 'Ada Lovelace', email: 'ada@training.dev',
-      }));
-      localStorage.setItem('training_token', 'demo.eyJzdWIiOiJkZW1vIn0.signature');
+      window.location.replace('Auth.html');
     }
   }, []);
 

@@ -557,13 +557,10 @@ function App() {
     document.documentElement.style.setProperty('--accent-tint', p.accentTint);
   }, [t.accent]);
 
-  // Stub user if missing
+  // No valid user means we landed here without auth — go back to sign in.
   oE(() => {
     if (!user) {
-      const stub = { userId: 'demo', displayName: 'Ada Lovelace', email: 'ada@training.dev' };
-      localStorage.setItem('training_user', JSON.stringify(stub));
-      localStorage.setItem('training_token', 'demo.eyJzdWIiOiJkZW1vIn0.signature');
-      setUser(stub);
+      window.location.replace('Auth.html');
     }
   }, []);
 

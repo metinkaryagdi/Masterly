@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.vscode/
+**/node_modules/
+.dotnet/
+.git/
+.gitignore
+**/*.user
+**/*.suo
+restore-*.log
+docker-compose.yml
+tests/
