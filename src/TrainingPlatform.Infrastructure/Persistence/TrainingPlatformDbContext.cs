@@ -56,10 +56,10 @@ public sealed class TrainingPlatformDbContext(DbContextOptions<TrainingPlatformD
     {
         var stringListConverter = new ValueConverter<List<string>, string>(
             value => JsonSerializer.Serialize(value, JsonOptions),
-            value => JsonSerializer.Deserialize<List<string>>(value, JsonOptions) ?? []);
+            value => JsonSerializer.Deserialize<List<string>>(value, JsonOptions) ?? new List<string>());
 
         var stringListComparer = new ValueComparer<List<string>>(
-            (left, right) => (left ?? []).SequenceEqual(right ?? []),
+            (left, right) => (left ?? new List<string>()).SequenceEqual(right ?? new List<string>()),
             value => value.Aggregate(0, (current, item) => HashCode.Combine(current, item.GetHashCode(StringComparison.Ordinal))),
             value => value.ToList());
 
