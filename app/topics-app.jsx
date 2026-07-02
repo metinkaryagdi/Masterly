@@ -9,7 +9,7 @@ const TOPICS_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "sort": "weak-first",
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const TOPICS_PALETTES = {

@@ -9,7 +9,7 @@ const DASH_TWEAKS = /*EDITMODE-BEGIN*/{
   "showTrend": true,
   "density": "regular",
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const DASH_PALETTES = {

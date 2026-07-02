@@ -12,7 +12,8 @@ public sealed record UserPreferencesDto(
     int DailyStudyMinutes,
     int DailyCodingChallengeTarget,
     int DailyScenarioChallengeTarget,
-    bool IncludeWeekends);
+    bool IncludeWeekends,
+    IReadOnlyList<string> Goals);
 
 public sealed record GetUserPreferencesQuery(Guid UserId) : IQuery<UserPreferencesDto>;
 
@@ -39,7 +40,8 @@ public sealed class GetUserPreferencesQueryHandler(ITrainingPlatformDbContext db
             preferences.DailyStudyMinutes,
             preferences.DailyCodingChallengeTarget,
             preferences.DailyScenarioChallengeTarget,
-            preferences.IncludeWeekends);
+            preferences.IncludeWeekends,
+            preferences.Goals.ToList());
     }
 }
 
@@ -49,7 +51,8 @@ public sealed record UpdateUserPreferencesCommand(
     int DailyStudyMinutes,
     int DailyCodingChallengeTarget,
     int DailyScenarioChallengeTarget,
-    bool IncludeWeekends) : ICommand<UserPreferencesDto>;
+    bool IncludeWeekends,
+    IReadOnlyList<string>? Goals) : ICommand<UserPreferencesDto>;
 
 public sealed class UpdateUserPreferencesCommandValidator : AbstractValidator<UpdateUserPreferencesCommand>
 {
@@ -60,6 +63,14 @@ public sealed class UpdateUserPreferencesCommandValidator : AbstractValidator<Up
         RuleFor(command => command.DailyStudyMinutes).InclusiveBetween(5, 480);
         RuleFor(command => command.DailyCodingChallengeTarget).InclusiveBetween(0, 10);
         RuleFor(command => command.DailyScenarioChallengeTarget).InclusiveBetween(0, 10);
+        RuleFor(command => command.Goals!)
+            .Must(goals => goals.Count <= 20)
+            .When(command => command.Goals is not null)
+            .WithMessage("At most 20 goals are supported.");
+        RuleForEach(command => command.Goals!)
+            .NotEmpty()
+            .MaximumLength(64)
+            .When(command => command.Goals is not null);
     }
 }
 
@@ -79,6 +90,7 @@ public sealed class UpdateUserPreferencesCommandHandler(ITrainingPlatformDbConte
             command.DailyCodingChallengeTarget,
             command.DailyScenarioChallengeTarget,
             command.IncludeWeekends,
+            command.Goals,
             clock.UtcNow);
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -88,6 +100,7 @@ public sealed class UpdateUserPreferencesCommandHandler(ITrainingPlatformDbConte
             user.Preferences.DailyStudyMinutes,
             user.Preferences.DailyCodingChallengeTarget,
             user.Preferences.DailyScenarioChallengeTarget,
-            user.Preferences.IncludeWeekends);
+            user.Preferences.IncludeWeekends,
+            user.Preferences.Goals.ToList());
     }
 }

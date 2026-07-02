@@ -38,6 +38,7 @@ public sealed class User : Entity
         int dailyCodingChallengeTarget,
         int dailyScenarioChallengeTarget,
         bool includeWeekends,
+        IEnumerable<string>? goals,
         DateTime updatedAtUtc)
     {
         Preferences.Update(
@@ -46,6 +47,7 @@ public sealed class User : Entity
             dailyCodingChallengeTarget,
             dailyScenarioChallengeTarget,
             includeWeekends,
+            goals,
             updatedAtUtc);
 
         Touch(updatedAtUtc);

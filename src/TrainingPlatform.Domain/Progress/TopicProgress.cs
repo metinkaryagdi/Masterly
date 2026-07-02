@@ -51,6 +51,13 @@ public sealed class TopicProgress : Entity
         return new TopicProgress(Guid.NewGuid(), userId, topicId, createdAtUtc);
     }
 
+    public static TopicProgress CreateSeeded(Guid userId, Guid topicId, int masterySeed, DateTime createdAtUtc)
+    {
+        var progress = new TopicProgress(Guid.NewGuid(), userId, topicId, createdAtUtc);
+        progress.MasteryScore = Math.Clamp(masterySeed, 0, 100);
+        return progress;
+    }
+
     public void ApplyTheoryAttempt(bool wasCorrect, int responseTimeSeconds, int masteryScore, double consistencyScore, DateTime updatedAtUtc)
     {
         TotalAttemptCount++;

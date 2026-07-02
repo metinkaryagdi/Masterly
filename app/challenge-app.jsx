@@ -9,7 +9,7 @@ const CHAL_TWEAKS = /*EDITMODE-BEGIN*/{
   "ideFont": "JetBrains Mono",
   "fontSize": 12.5,
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const CHAL_PALETTES = {

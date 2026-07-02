@@ -21,6 +21,7 @@ public sealed class DailyStudyPlanServiceTests
             dailyCodingChallengeTarget: 1,
             dailyScenarioChallengeTarget: 1,
             includeWeekends: true,
+            goals: null,
             updatedAtUtc: Now);
         return user;
     }

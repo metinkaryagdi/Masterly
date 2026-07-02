@@ -727,6 +727,7 @@ const PREFERENCE_DEFAULTS = {
   dailyCodingChallengeTarget: 1,
   dailyScenarioChallengeTarget: 1,
   includeWeekends: true,
+  goals: [],
 };
 
 async function fetchPreferences({ apiBase, demoMode }) {
@@ -753,6 +754,29 @@ async function updatePreferences({ apiBase, demoMode }, body) {
   });
 }
 
+async function completeOnboarding({ apiBase, demoMode }, body) {
+  const payload = {
+    dailyQuestionTarget: body.dailyQuestionTarget ?? PREFERENCE_DEFAULTS.dailyQuestionTarget,
+    dailyStudyMinutes: body.dailyStudyMinutes ?? PREFERENCE_DEFAULTS.dailyStudyMinutes,
+    dailyCodingChallengeTarget: body.dailyCodingChallengeTarget ?? PREFERENCE_DEFAULTS.dailyCodingChallengeTarget,
+    dailyScenarioChallengeTarget: body.dailyScenarioChallengeTarget ?? PREFERENCE_DEFAULTS.dailyScenarioChallengeTarget,
+    includeWeekends: body.includeWeekends ?? PREFERENCE_DEFAULTS.includeWeekends,
+    goals: body.goals ?? [],
+    assessments: body.assessments ?? [],
+  };
+  if (demoMode) {
+    await new Promise(r => setTimeout(r, 220));
+    const stored = { ...payload };
+    delete stored.assessments;
+    localStorage.setItem('training_preferences_demo', JSON.stringify(stored));
+    return stored;
+  }
+  return fetchJson(`${apiBase.replace(/\/$/, '')}/api/me/onboarding`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 Object.assign(window, {
   StudyPlanItemType, DailyStudyPlanStatus, TopicDifficulty, QuestionType, ChallengeOutcome,
   TOPIC_NAMES,
@@ -761,6 +785,6 @@ Object.assign(window, {
   MOCK_CODING_CHALLENGES, MOCK_SCENARIO_CHALLENGES,
   fetchTodayPlan, fetchDashboard, generatePlan, fetchQuestion, submitAnswer,
   fetchTopics, fetchChallenge, submitChallenge,
-  fetchPreferences, updatePreferences, probeHealth,
+  fetchPreferences, updatePreferences, completeOnboarding, probeHealth,
   getCurrentUser, getAuthToken,
 });

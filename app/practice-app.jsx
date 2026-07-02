@@ -7,7 +7,7 @@ const PRACTICE_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "showTimer": true,
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const PRACTICE_PALETTES = {

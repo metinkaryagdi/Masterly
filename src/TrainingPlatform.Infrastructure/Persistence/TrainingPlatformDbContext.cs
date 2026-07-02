@@ -22,6 +22,8 @@ public sealed class TrainingPlatformDbContext(DbContextOptions<TrainingPlatformD
 
     public DbSet<SkillTarget> SkillTargets => Set<SkillTarget>();
 
+    public DbSet<TopicSelfAssessment> TopicSelfAssessments => Set<TopicSelfAssessment>();
+
     public DbSet<Topic> Topics => Set<Topic>();
 
     public DbSet<TopicDependency> TopicDependencies => Set<TopicDependency>();
@@ -80,6 +82,8 @@ public sealed class TrainingPlatformDbContext(DbContextOptions<TrainingPlatformD
             entity.ToTable("user_preferences");
             entity.HasKey(item => item.Id);
             entity.HasIndex(item => item.UserId).IsUnique();
+            entity.Property(item => item.Goals).HasConversion(stringListConverter);
+            entity.Property(item => item.Goals).Metadata.SetValueComparer(stringListComparer);
         });
 
         modelBuilder.Entity<SkillTarget>(entity =>
@@ -87,6 +91,14 @@ public sealed class TrainingPlatformDbContext(DbContextOptions<TrainingPlatformD
             entity.ToTable("skill_targets");
             entity.HasKey(item => item.Id);
             entity.HasIndex(item => new { item.UserId, item.TopicId }).IsUnique();
+        });
+
+        modelBuilder.Entity<TopicSelfAssessment>(entity =>
+        {
+            entity.ToTable("topic_self_assessments");
+            entity.HasKey(item => item.Id);
+            entity.HasIndex(item => new { item.UserId, item.TopicId }).IsUnique();
+            entity.Property(item => item.Level).HasConversion<string>().HasMaxLength(20);
         });
 
         modelBuilder.Entity<Topic>(entity =>

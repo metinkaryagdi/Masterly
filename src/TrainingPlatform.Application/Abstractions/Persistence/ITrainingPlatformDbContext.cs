@@ -15,6 +15,8 @@ public interface ITrainingPlatformDbContext
 
     DbSet<SkillTarget> SkillTargets { get; }
 
+    DbSet<TopicSelfAssessment> TopicSelfAssessments { get; }
+
     DbSet<Topic> Topics { get; }
 
     DbSet<TopicDependency> TopicDependencies { get; }

@@ -8,7 +8,8 @@ const { useState: oS, useEffect: oE, useMemo: oM, useRef: oR } = React;
 const ONB_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "skipGen": false,
-  "demoMode": true
+  "apiBase": "http://localhost:5000",
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const ONB_PALETTES = {
@@ -545,9 +546,30 @@ function App() {
   const [goals, setGoals] = oS(new Set());
   const [minutes, setMinutes] = oS(20);
   const [assessments, setAssessments] = oS({}); // topicId → 'novice'|'familiar'|'strong'
+  const [topics, setTopics] = oS(MOCK_TOPICS);
   const [plan, setPlan] = oS(null);
 
   const totalSteps = 5;
+
+  // Load topics — demo mode returns MOCK_TOPICS, real mode hits /api/topics so
+  // the self-assessment screen submits actual topic UUIDs the backend knows.
+  oE(() => {
+    fetchTopics({ apiBase: t.apiBase, demoMode: t.demoMode })
+      .then((list) => {
+        if (Array.isArray(list) && list.length > 0) {
+          setTopics(list);
+          setAssessments((prev) => {
+            const allowed = new Set(list.map((topic) => topic.id));
+            const next = {};
+            for (const key of Object.keys(prev)) {
+              if (allowed.has(key)) next[key] = prev[key];
+            }
+            return next;
+          });
+        }
+      })
+      .catch(() => { /* fall back to MOCK_TOPICS */ });
+  }, [t.demoMode]);
 
   // Apply accent
   oE(() => {
@@ -570,9 +592,6 @@ function App() {
   };
 
   const handleFinish = async () => {
-    // Goals + assessments are still UI-only (no backend model yet). The fields
-    // the backend persists are derived from the time budget — daily question
-    // target scales with minutes, challenges default to one of each kind.
     const prefs = {
       goals: Array.from(goals),
       minutesPerDay: minutes,
@@ -582,17 +601,25 @@ function App() {
     localStorage.setItem('training_prefs', JSON.stringify(prefs));
     localStorage.setItem('training_onboarded', 'true');
 
+    const levelToBackend = { novice: 'Novice', familiar: 'Familiar', strong: 'Strong' };
+    const validTopicIds = new Set(topics.map((topic) => topic.id));
+    const assessmentPayload = Object.entries(assessments)
+      .filter(([topicId, level]) => validTopicIds.has(topicId) && levelToBackend[level])
+      .map(([topicId, level]) => ({ topicId, level: levelToBackend[level] }));
+
     try {
-      await updatePreferences({ apiBase: 'http://localhost:5000', demoMode: t.demoMode }, {
+      await completeOnboarding({ apiBase: t.apiBase, demoMode: t.demoMode }, {
         dailyQuestionTarget: Math.max(1, Math.round(minutes / 2.5)),
         dailyStudyMinutes: minutes,
         dailyCodingChallengeTarget: 1,
         dailyScenarioChallengeTarget: 1,
         includeWeekends: true,
+        goals: Array.from(goals),
+        assessments: assessmentPayload,
       });
     } catch (err) {
-      // Don't block the flow if preferences sync fails — user can adjust in Settings.
-      console.warn('Preferences sync failed:', err);
+      // Don't block the flow if the sync fails — user can adjust in Settings.
+      console.warn('Onboarding sync failed:', err);
     }
 
     window.location.href = 'Dashboard.html';
@@ -601,7 +628,7 @@ function App() {
   // After generation, fetch the new plan to power the reveal stats
   oE(() => {
     if (step === 4 && !plan) {
-      fetchTodayPlan({ apiBase: 'http://localhost:5000', demoMode: t.demoMode })
+      fetchTodayPlan({ apiBase: t.apiBase, demoMode: t.demoMode })
         .then(setPlan).catch(() => setPlan(null));
     }
   }, [step]);
@@ -622,7 +649,7 @@ function App() {
         {step === 2 && (
           <StepAssessment
             assessments={assessments} setAssessments={setAssessments}
-            topics={MOCK_TOPICS}
+            topics={topics}
             onBack={() => setStep(1)} onNext={() => setStep(3)}
           />
         )}
@@ -630,7 +657,7 @@ function App() {
           <StepGenerating
             onDone={() => setStep(4)}
             demoMode={t.demoMode}
-            apiBase="http://localhost:5000"
+            apiBase={t.apiBase}
             skipGen={t.skipGen}
           />
         )}

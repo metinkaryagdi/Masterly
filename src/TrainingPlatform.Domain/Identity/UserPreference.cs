@@ -17,6 +17,7 @@ public sealed class UserPreference : Entity
         DailyCodingChallengeTarget = 1;
         DailyScenarioChallengeTarget = 1;
         IncludeWeekends = true;
+        Goals = new List<string>();
     }
 
     public Guid UserId { get; private set; }
@@ -31,6 +32,8 @@ public sealed class UserPreference : Entity
 
     public bool IncludeWeekends { get; private set; }
 
+    public List<string> Goals { get; private set; } = new();
+
     public static UserPreference CreateDefault(Guid userId, DateTime createdAtUtc)
     {
         return new UserPreference(Guid.NewGuid(), userId, createdAtUtc);
@@ -42,6 +45,7 @@ public sealed class UserPreference : Entity
         int dailyCodingChallengeTarget,
         int dailyScenarioChallengeTarget,
         bool includeWeekends,
+        IEnumerable<string>? goals,
         DateTime updatedAtUtc)
     {
         DailyQuestionTarget = dailyQuestionTarget;
@@ -49,6 +53,16 @@ public sealed class UserPreference : Entity
         DailyCodingChallengeTarget = dailyCodingChallengeTarget;
         DailyScenarioChallengeTarget = dailyScenarioChallengeTarget;
         IncludeWeekends = includeWeekends;
+
+        if (goals is not null)
+        {
+            Goals = goals
+                .Where(static value => !string.IsNullOrWhiteSpace(value))
+                .Select(static value => value.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         Touch(updatedAtUtc);
     }
 }

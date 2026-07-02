@@ -8,7 +8,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "layout": "split",
   "brandVisual": "mastery",
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const ACCENT_PALETTES = {

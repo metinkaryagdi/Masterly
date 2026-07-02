@@ -7,7 +7,7 @@ const { useState: sS, useEffect: sE, useMemo: sM, useRef: sR } = React;
 const SETTINGS_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "apiBase": "http://localhost:5000",
-  "demoMode": true
+  "demoMode": false
 }/*EDITMODE-END*/;
 
 const SETTINGS_PALETTES = {
