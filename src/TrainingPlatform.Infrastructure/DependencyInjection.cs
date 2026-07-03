@@ -6,11 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using TrainingPlatform.Application.Abstractions.AI;
+using TrainingPlatform.Application.Abstractions.Execution;
 using TrainingPlatform.Application.Abstractions.Persistence;
 using TrainingPlatform.Application.Abstractions.Security;
 using TrainingPlatform.Application.Abstractions.Time;
 using TrainingPlatform.Infrastructure.AI;
 using TrainingPlatform.Infrastructure.Auth;
+using TrainingPlatform.Infrastructure.Execution;
 using TrainingPlatform.Infrastructure.Persistence;
 using TrainingPlatform.Infrastructure.Time;
 
@@ -22,6 +24,7 @@ public static class DependencyInjection
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<OllamaOptions>(configuration.GetSection(OllamaOptions.SectionName));
+        services.Configure<RunnerOptions>(configuration.GetSection(RunnerOptions.SectionName));
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
                                ?? "Host=localhost;Port=5432;Database=training_platform;Username=postgres;Password=postgres";
@@ -35,6 +38,17 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IClock, SystemClock>();
+
+        services.AddHttpClient<ICodeExecutionService, HttpCodeExecutionService>((provider, client) =>
+        {
+            var runnerOptions = configuration.GetSection(RunnerOptions.SectionName).Get<RunnerOptions>() ?? new RunnerOptions();
+            if (Uri.TryCreate(runnerOptions.BaseUrl, UriKind.Absolute, out var baseUri))
+            {
+                client.BaseAddress = baseUri;
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(10, runnerOptions.TimeoutSeconds));
+        });
 
         services.AddHttpClient<OllamaApiClient>();
         services.AddScoped<IQuestionGenerationService, OllamaQuestionGenerationService>();

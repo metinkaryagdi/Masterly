@@ -14,7 +14,7 @@ namespace TrainingPlatform.IntegrationTests;
 /// connection is kept open for the lifetime of the factory so the in-memory
 /// schema survives across scopes.
 /// </summary>
-public sealed class TrainingPlatformApiFactory : WebApplicationFactory<Program>
+public class TrainingPlatformApiFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
@@ -29,7 +29,14 @@ public sealed class TrainingPlatformApiFactory : WebApplicationFactory<Program>
 
             _connection.Open();
             services.AddDbContext<TrainingPlatformDbContext>(options => options.UseSqlite(_connection));
+
+            ConfigureTestServices(services);
         });
+    }
+
+    /// <summary>Hook for derived factories to swap services (e.g. a stubbed code runner).</summary>
+    protected virtual void ConfigureTestServices(IServiceCollection services)
+    {
     }
 
     protected override void Dispose(bool disposing)

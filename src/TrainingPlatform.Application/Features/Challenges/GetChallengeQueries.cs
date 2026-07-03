@@ -35,7 +35,9 @@ public sealed class GetCodingChallengeByIdQueryHandler(ITrainingPlatformDbContex
             challenge.EstimatedMinutes,
             challenge.EvaluationCriteria,
             challenge.StarterCode,
-            challenge.ExpectedOutcome);
+            challenge.ExpectedOutcome,
+            challenge.HasAutomatedTests,
+            challenge.TestCode);
     }
 }
 

@@ -17,6 +17,20 @@ services:
       timeout: 3s
       retries: 10
 
+  runner:
+    build:
+      context: .
+      dockerfile: src/TrainingPlatform.Runner/Dockerfile
+    container_name: training-runner
+    restart: unless-stopped
+    # Executes learner-submitted code: keep it resource-capped and without
+    # published ports — only the api reaches it over the compose network.
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+    mem_limit: 1536m
+    cpus: 1.5
+    pids_limit: 512
+
   api:
     build:
       context: .
@@ -26,14 +40,26 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      runner:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5000
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=training_platform;Username=postgres;Password=postgres"
+      Execution__Runner__Enabled: "true"
+      Execution__Runner__BaseUrl: "http://runner:8080"
+      # AI coaching feedback via a host-side Ollama. Best-effort: when no
+      # Ollama is reachable, submissions simply skip the AI feedback section.
+      AI__Ollama__Enabled: "${OLLAMA_ENABLED:-true}"
+      AI__Ollama__BaseUrl: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+      AI__Ollama__Model: "${OLLAMA_MODEL:-gemma3:4b}"
+      AI__Ollama__TimeoutSeconds: "120"
       Jwt__SecretKey: "dev-only-please-replace-with-a-32+-char-secret-in-prod"
       Jwt__Issuer: "TrainingPlatform"
       Jwt__Audience: "TrainingPlatform.Client"
       Jwt__ExpiryMinutes: "120"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${API_PORT:-5000}:5000"
 

@@ -4,6 +4,7 @@
     <Project Path="src/TrainingPlatform.Application/TrainingPlatform.Application.csproj" />
     <Project Path="src/TrainingPlatform.Domain/TrainingPlatform.Domain.csproj" />
     <Project Path="src/TrainingPlatform.Infrastructure/TrainingPlatform.Infrastructure.csproj" />
+    <Project Path="src/TrainingPlatform.Runner/TrainingPlatform.Runner.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TrainingPlatform.IntegrationTests/TrainingPlatform.IntegrationTests.csproj" />

@@ -33,16 +33,17 @@ public static class TrainingPlatformSeeder
 
         if (!await dbContext.Topics.AnyAsync(cancellationToken))
         {
-            await SeedTopicsAndChallengesAsync(dbContext, now, cancellationToken);
+            await SeedTopicsAsync(dbContext, now, cancellationToken);
         }
 
-        // The question pool tops up on every startup so databases created before
-        // new pool content was authored pick it up automatically. Existing rows
-        // are matched by (topic, prompt), which makes the pass idempotent.
+        // Content pools top up on every startup so databases created before new
+        // pool content was authored pick it up automatically. Existing rows are
+        // matched by (topic, prompt/title), which makes the passes idempotent.
         await TopUpQuestionPoolAsync(dbContext, now, cancellationToken);
+        await TopUpChallengePoolAsync(dbContext, now, cancellationToken);
     }
 
-    private static async Task SeedTopicsAndChallengesAsync(TrainingPlatformDbContext dbContext, DateTime now, CancellationToken cancellationToken)
+    private static async Task SeedTopicsAsync(TrainingPlatformDbContext dbContext, DateTime now, CancellationToken cancellationToken)
     {
         var csharp = Topic.Create("C# Foundations", "csharp-foundations", "Language fundamentals, LINQ, and async patterns.", TopicDifficulty.Fundamental, 1.2d, [], now);
         var aspNet = Topic.Create("ASP.NET Core API Design", "aspnet-core-api-design", "Controllers, contracts, auth, and HTTP concerns.", TopicDifficulty.Intermediate, 1.15d, [csharp.Id], now);
@@ -54,23 +55,58 @@ public static class TrainingPlatformSeeder
         var postgres = Topic.Create("PostgreSQL", "postgresql", "Indexes, transactions, and relational modeling.", TopicDifficulty.Intermediate, 1.15d, [efCore.Id], now);
 
         await dbContext.Topics.AddRangeAsync([csharp, aspNet, efCore, cleanArchitecture, cqrs, jwt, caching, postgres], cancellationToken);
-
-        var codingChallenges = new[]
-        {
-            CodingChallenge.Create(cqrs.Id, "Add a Query Handler for Topic Mastery", "Design a CQRS query that returns topic mastery metrics without leaking EF entities into the API layer.", TopicDifficulty.Advanced, 60, ["Use an application DTO", "Keep infrastructure concerns out of the API", "Support filtering by topic"], "public sealed record GetTopicMasteryQuery(Guid UserId);", "A query handler and response DTO that returns mastery details cleanly.", now),
-            CodingChallenge.Create(aspNet.Id, "Secure a Training Endpoint with JWT", "Add JWT protection and extract the current user identifier from claims for an endpoint.", TopicDifficulty.Intermediate, 45, ["Use Authorize", "Validate claims access", "Avoid trusting request body user ids"], "[Authorize]\npublic sealed class StudyPlansController : ControllerBase { }", "A protected endpoint that reads the user id from the authenticated principal.", now)
-        };
-
-        var scenarioChallenges = new[]
-        {
-            ScenarioChallenge.Create(cleanArchitecture.Id, "Modular Monolith Boundary Review", "You need analytics, revision scheduling, and AI feedback in one deployable. Explain where module boundaries should exist today and what to split later.", TopicDifficulty.Advanced, 45, ["boundary clarity", "data ownership", "future extraction"], "Keep modules separated by application/domain boundaries first, then extract services only when team and deployment pressure justify it.", now),
-            ScenarioChallenge.Create(caching.Id, "Caching Dashboard Reads", "A daily dashboard is slow because it joins user progress, schedules, and question history. Explain whether caching belongs here and how invalidation should work.", TopicDifficulty.Advanced, 45, ["cache scope", "freshness", "invalidation"], "Cache read models with explicit invalidation on answer submission and plan generation; avoid caching writes or truth-source state.", now)
-        };
-
-        await dbContext.CodingChallenges.AddRangeAsync(codingChallenges, cancellationToken);
-        await dbContext.ScenarioChallenges.AddRangeAsync(scenarioChallenges, cancellationToken);
-
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task TopUpChallengePoolAsync(TrainingPlatformDbContext dbContext, DateTime now, CancellationToken cancellationToken)
+    {
+        var topicIdsBySlug = await dbContext.Topics
+            .ToDictionaryAsync(topic => topic.Slug, topic => topic.Id, cancellationToken);
+
+        var existingCoding = (await dbContext.CodingChallenges
+            .Select(challenge => new { challenge.TopicId, challenge.Title })
+            .ToListAsync(cancellationToken))
+            .Select(entry => (entry.TopicId, entry.Title))
+            .ToHashSet();
+
+        var existingScenario = (await dbContext.ScenarioChallenges
+            .Select(challenge => new { challenge.TopicId, challenge.Title })
+            .ToListAsync(cancellationToken))
+            .Select(entry => (entry.TopicId, entry.Title))
+            .ToHashSet();
+
+        var added = false;
+
+        foreach (var spec in CodingChallengePool())
+        {
+            if (!topicIdsBySlug.TryGetValue(spec.TopicSlug, out var topicId) || existingCoding.Contains((topicId, spec.Title)))
+            {
+                continue;
+            }
+
+            dbContext.CodingChallenges.Add(CodingChallenge.Create(
+                topicId, spec.Title, spec.Description, spec.Difficulty, spec.Minutes,
+                spec.Criteria, spec.StarterCode, spec.ExpectedOutcome, now, spec.TestCode));
+            added = true;
+        }
+
+        foreach (var spec in ScenarioChallengePool())
+        {
+            if (!topicIdsBySlug.TryGetValue(spec.TopicSlug, out var topicId) || existingScenario.Contains((topicId, spec.Title)))
+            {
+                continue;
+            }
+
+            dbContext.ScenarioChallenges.Add(ScenarioChallenge.Create(
+                topicId, spec.Title, spec.Scenario, spec.Difficulty, spec.Minutes,
+                spec.Criteria, spec.ReferenceSolution, now));
+            added = true;
+        }
+
+        if (added)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 
     private static async Task TopUpQuestionPoolAsync(TrainingPlatformDbContext dbContext, DateTime now, CancellationToken cancellationToken)
@@ -117,6 +153,321 @@ public static class TrainingPlatformSeeder
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private sealed record CodingChallengeSpec(
+        string TopicSlug,
+        string Title,
+        string Description,
+        TopicDifficulty Difficulty,
+        int Minutes,
+        string[] Criteria,
+        string StarterCode,
+        string ExpectedOutcome,
+        string TestCode);
+
+    private sealed record ScenarioChallengeSpec(
+        string TopicSlug,
+        string Title,
+        string Scenario,
+        TopicDifficulty Difficulty,
+        int Minutes,
+        string[] Criteria,
+        string ReferenceSolution);
+
+    /// <summary>
+    /// Coding challenge pool. Challenges with TestCode are compiled and executed
+    /// against the learner's submission by the judge runner; ones without stay
+    /// on the review/AI-feedback path. Titles are identity — never reword one
+    /// in place, add a new entry instead.
+    /// </summary>
+    private static IEnumerable<CodingChallengeSpec> CodingChallengePool()
+    {
+        yield return new CodingChallengeSpec(
+            "cqrs",
+            "Add a Query Handler for Topic Mastery",
+            "Design a CQRS query that returns topic mastery metrics without leaking EF entities into the API layer.",
+            TopicDifficulty.Advanced, 60,
+            ["Use an application DTO", "Keep infrastructure concerns out of the API", "Support filtering by topic"],
+            "public sealed record GetTopicMasteryQuery(Guid UserId);",
+            "A query handler and response DTO that returns mastery details cleanly.",
+            TestCode: "");
+
+        yield return new CodingChallengeSpec(
+            "aspnet-core-api-design",
+            "Secure a Training Endpoint with JWT",
+            "Add JWT protection and extract the current user identifier from claims for an endpoint.",
+            TopicDifficulty.Intermediate, 45,
+            ["Use Authorize", "Validate claims access", "Avoid trusting request body user ids"],
+            "[Authorize]\npublic sealed class StudyPlansController : ControllerBase { }",
+            "A protected endpoint that reads the user id from the authenticated principal.",
+            TestCode: "");
+
+        yield return new CodingChallengeSpec(
+            "csharp-foundations",
+            "Implement a sliding window rate limiter",
+            """
+            Build a rate limiter that allows at most `limit` calls inside a sliding
+            time window. A call at time T is allowed when fewer than `limit` calls
+            were ALLOWED in the interval (T - window, T]. Rejected calls do not
+            consume capacity.
+
+            Keep the class in the global namespace (no namespace declaration) so
+            the test suite can find it. The clock is passed in — do not use
+            DateTime.UtcNow inside the class.
+            """,
+            TopicDifficulty.Intermediate, 30,
+            ["Sliding window semantics (not fixed buckets)", "Rejected calls consume no capacity", "No wall-clock access inside the class"],
+            """
+            public class SlidingWindowRateLimiter
+            {
+                public SlidingWindowRateLimiter(int limit, TimeSpan window)
+                {
+                    // TODO
+                }
+
+                // Returns true when the call at 'nowUtc' is allowed, false when the
+                // window already holds 'limit' allowed calls.
+                public bool TryAcquire(DateTime nowUtc)
+                {
+                    // TODO
+                    return false;
+                }
+            }
+            """,
+            "All rate-limiter tests green: capacity respected, window slides, rejections don't consume capacity.",
+            """
+            using Xunit;
+
+            public class SlidingWindowRateLimiterTests
+            {
+                private static readonly DateTime T0 = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+
+                [Fact]
+                public void Allows_calls_up_to_the_limit()
+                {
+                    var limiter = new SlidingWindowRateLimiter(3, TimeSpan.FromSeconds(10));
+                    Assert.True(limiter.TryAcquire(T0));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(1)));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(2)));
+                }
+
+                [Fact]
+                public void Rejects_the_call_over_the_limit()
+                {
+                    var limiter = new SlidingWindowRateLimiter(2, TimeSpan.FromSeconds(10));
+                    Assert.True(limiter.TryAcquire(T0));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(1)));
+                    Assert.False(limiter.TryAcquire(T0.AddSeconds(2)));
+                }
+
+                [Fact]
+                public void Allows_again_after_the_window_slides()
+                {
+                    var limiter = new SlidingWindowRateLimiter(2, TimeSpan.FromSeconds(10));
+                    Assert.True(limiter.TryAcquire(T0));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(1)));
+                    Assert.False(limiter.TryAcquire(T0.AddSeconds(5)));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(10.5)));
+                }
+
+                [Fact]
+                public void Rejected_calls_do_not_consume_capacity()
+                {
+                    var limiter = new SlidingWindowRateLimiter(1, TimeSpan.FromSeconds(10));
+                    Assert.True(limiter.TryAcquire(T0));
+                    Assert.False(limiter.TryAcquire(T0.AddSeconds(1)));
+                    Assert.False(limiter.TryAcquire(T0.AddSeconds(2)));
+                    Assert.True(limiter.TryAcquire(T0.AddSeconds(11)));
+                }
+            }
+            """);
+
+        yield return new CodingChallengeSpec(
+            "caching-strategy",
+            "Implement an in-memory LRU cache",
+            """
+            Build a least-recently-used cache with a fixed capacity. When the cache
+            is full, inserting a new key evicts the entry that has gone unused the
+            longest. Both reads (TryGet) and writes (Set) refresh an entry's recency.
+
+            Keep the class in the global namespace so the test suite can find it.
+            """,
+            TopicDifficulty.Advanced, 40,
+            ["O(1) get/set is the goal", "Reads refresh recency", "Updating an existing key must not grow the cache"],
+            """
+            public class LruCache<TKey, TValue> where TKey : notnull
+            {
+                public LruCache(int capacity)
+                {
+                    // TODO
+                }
+
+                public int Count => 0; // TODO
+
+                public bool TryGet(TKey key, out TValue? value)
+                {
+                    // TODO
+                    value = default;
+                    return false;
+                }
+
+                public void Set(TKey key, TValue value)
+                {
+                    // TODO
+                }
+            }
+            """,
+            "All LRU tests green: capacity eviction, recency refresh on read, in-place updates.",
+            """
+            using Xunit;
+
+            public class LruCacheTests
+            {
+                [Fact]
+                public void Stores_and_retrieves_values()
+                {
+                    var cache = new LruCache<string, int>(2);
+                    cache.Set("a", 1);
+                    Assert.True(cache.TryGet("a", out var value));
+                    Assert.Equal(1, value);
+                }
+
+                [Fact]
+                public void Evicts_the_least_recently_used_entry_at_capacity()
+                {
+                    var cache = new LruCache<string, int>(2);
+                    cache.Set("a", 1);
+                    cache.Set("b", 2);
+                    cache.Set("c", 3);
+                    Assert.False(cache.TryGet("a", out _));
+                    Assert.True(cache.TryGet("b", out _));
+                    Assert.True(cache.TryGet("c", out _));
+                    Assert.Equal(2, cache.Count);
+                }
+
+                [Fact]
+                public void Reading_an_entry_refreshes_its_recency()
+                {
+                    var cache = new LruCache<string, int>(2);
+                    cache.Set("a", 1);
+                    cache.Set("b", 2);
+                    Assert.True(cache.TryGet("a", out _));
+                    cache.Set("c", 3);
+                    Assert.True(cache.TryGet("a", out _));
+                    Assert.False(cache.TryGet("b", out _));
+                }
+
+                [Fact]
+                public void Updating_an_existing_key_replaces_the_value_without_growing()
+                {
+                    var cache = new LruCache<string, int>(2);
+                    cache.Set("a", 1);
+                    cache.Set("a", 10);
+                    Assert.Equal(1, cache.Count);
+                    Assert.True(cache.TryGet("a", out var value));
+                    Assert.Equal(10, value);
+                }
+            }
+            """);
+
+        yield return new CodingChallengeSpec(
+            "aspnet-core-api-design",
+            "Implement pagination metadata for a list endpoint",
+            """
+            Slice a source list into a single page and report the paging metadata a
+            list endpoint would return. Clamp the requested page into the valid
+            range: below 1 becomes 1; past the last page becomes the last page.
+            An empty source yields an empty first page with zero totals.
+
+            Keep both types in the global namespace so the test suite can find them.
+            """,
+            TopicDifficulty.Intermediate, 25,
+            ["Correct slice for the requested page", "Page number clamped to the valid range", "Accurate TotalCount/TotalPages metadata"],
+            """
+            public sealed record PagedResult<T>(
+                IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount, int TotalPages);
+
+            public static class Paginator
+            {
+                public static PagedResult<T> Paginate<T>(IReadOnlyList<T> source, int page, int pageSize)
+                {
+                    // TODO
+                    return new PagedResult<T>(Array.Empty<T>(), 1, pageSize, 0, 0);
+                }
+            }
+            """,
+            "All pagination tests green: slicing, clamping, and metadata.",
+            """
+            using Xunit;
+
+            public class PaginatorTests
+            {
+                private static readonly IReadOnlyList<int> Source = Enumerable.Range(1, 25).ToList();
+
+                [Fact]
+                public void Returns_the_requested_page_slice()
+                {
+                    var page = Paginator.Paginate(Source, page: 2, pageSize: 10);
+                    Assert.Equal(new[] { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 }, page.Items);
+                    Assert.Equal(2, page.Page);
+                    Assert.Equal(25, page.TotalCount);
+                    Assert.Equal(3, page.TotalPages);
+                }
+
+                [Fact]
+                public void Last_page_may_be_partial()
+                {
+                    var page = Paginator.Paginate(Source, page: 3, pageSize: 10);
+                    Assert.Equal(new[] { 21, 22, 23, 24, 25 }, page.Items);
+                }
+
+                [Fact]
+                public void Page_below_one_clamps_to_the_first_page()
+                {
+                    var page = Paginator.Paginate(Source, page: 0, pageSize: 10);
+                    Assert.Equal(1, page.Page);
+                    Assert.Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, page.Items);
+                }
+
+                [Fact]
+                public void Page_past_the_end_clamps_to_the_last_page()
+                {
+                    var page = Paginator.Paginate(Source, page: 99, pageSize: 10);
+                    Assert.Equal(3, page.Page);
+                    Assert.Equal(new[] { 21, 22, 23, 24, 25 }, page.Items);
+                }
+
+                [Fact]
+                public void Empty_source_yields_an_empty_first_page()
+                {
+                    var page = Paginator.Paginate(new List<int>(), page: 1, pageSize: 10);
+                    Assert.Empty(page.Items);
+                    Assert.Equal(1, page.Page);
+                    Assert.Equal(0, page.TotalCount);
+                    Assert.Equal(0, page.TotalPages);
+                }
+            }
+            """);
+    }
+
+    private static IEnumerable<ScenarioChallengeSpec> ScenarioChallengePool()
+    {
+        yield return new ScenarioChallengeSpec(
+            "clean-architecture",
+            "Modular Monolith Boundary Review",
+            "You need analytics, revision scheduling, and AI feedback in one deployable. Explain where module boundaries should exist today and what to split later.",
+            TopicDifficulty.Advanced, 45,
+            ["boundary clarity", "data ownership", "future extraction"],
+            "Keep modules separated by application/domain boundaries first, then extract services only when team and deployment pressure justify it.");
+
+        yield return new ScenarioChallengeSpec(
+            "caching-strategy",
+            "Caching Dashboard Reads",
+            "A daily dashboard is slow because it joins user progress, schedules, and question history. Explain whether caching belongs here and how invalidation should work.",
+            TopicDifficulty.Advanced, 45,
+            ["cache scope", "freshness", "invalidation"],
+            "Cache read models with explicit invalidation on answer submission and plan generation; avoid caching writes or truth-source state.");
     }
 
     private sealed record QuestionSpec(

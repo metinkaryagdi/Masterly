@@ -43,6 +43,12 @@ public sealed class CodingSubmission : Entity
 
     public DateTime? ReviewedAtUtc { get; private set; }
 
+    public int? TestsPassed { get; private set; }
+
+    public int? TestsTotal { get; private set; }
+
+    public string Feedback { get; private set; } = string.Empty;
+
     public static CodingSubmission Create(
         Guid userId,
         Guid codingChallengeId,
@@ -60,5 +66,35 @@ public sealed class CodingSubmission : Entity
         Outcome = outcome;
         ReviewedAtUtc = reviewedAtUtc;
         Touch(reviewedAtUtc);
+    }
+
+    public void RecordAutomatedEvaluation(
+        int score,
+        ChallengeOutcome outcome,
+        int testsPassed,
+        int testsTotal,
+        string feedback,
+        DateTime evaluatedAtUtc)
+    {
+        Score = score;
+        Outcome = outcome;
+        TestsPassed = testsPassed;
+        TestsTotal = testsTotal;
+        Feedback = feedback;
+        ReviewedAtUtc = evaluatedAtUtc;
+        Touch(evaluatedAtUtc);
+    }
+
+    public void AppendFeedback(string additionalFeedback, DateTime updatedAtUtc)
+    {
+        if (string.IsNullOrWhiteSpace(additionalFeedback))
+        {
+            return;
+        }
+
+        Feedback = string.IsNullOrWhiteSpace(Feedback)
+            ? additionalFeedback
+            : $"{Feedback}\n\n{additionalFeedback}";
+        Touch(updatedAtUtc);
     }
 }

@@ -9,6 +9,8 @@ public sealed record SubmitCodingChallengeRequest(Guid CodingChallengeId, Guid? 
 
 public sealed record SubmitScenarioChallengeRequest(Guid ScenarioChallengeId, Guid? DailyStudyPlanId, string ResponseText);
 
+public sealed record RunCodingChallengeRequest(string SubmittedCode);
+
 [Route("api/challenges")]
 public sealed class ChallengesController(ICommandDispatcher commandDispatcher, IQueryDispatcher queryDispatcher) : AuthenticatedControllerBase
 {
@@ -43,6 +45,18 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     public async Task<ActionResult<ScenarioChallengeDto>> CreateScenarioChallenge(CreateScenarioChallengeCommand command, CancellationToken cancellationToken)
     {
         var response = await commandDispatcher.Dispatch<CreateScenarioChallengeCommand, ScenarioChallengeDto>(command, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPost("coding/{id:guid}/run")]
+    [ProducesResponseType<CodeRunDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CodeRunDto>> RunCodingChallenge(Guid id, RunCodingChallengeRequest request, CancellationToken cancellationToken)
+    {
+        var response = await commandDispatcher.Dispatch<RunCodingChallengeCommand, CodeRunDto>(
+            new RunCodingChallengeCommand(CurrentUserId, id, request.SubmittedCode),
+            cancellationToken);
+
         return Ok(response);
     }
 

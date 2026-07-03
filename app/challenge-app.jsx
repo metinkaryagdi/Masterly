@@ -317,7 +317,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
 }
 
 /* ─────────────── IDE panel (coding) ─────────────── */
-function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, submitting, runState, fileTab, setFileTab }) {
+function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, submitting, runState, runResult, running, fileTab, setFileTab }) {
   const tabs = [
     { id: 'solution', label: 'Solution.cs', dirty: code !== challenge.starterCode },
     { id: 'tests',    label: 'Tests.cs',    dirty: false, readOnly: true },
@@ -351,7 +351,8 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
           <CodeEditor value={code} onChange={setCode} />
         )}
         {fileTab === 'tests' && (
-          <TestsView tests={challenge.tests || []} runState={runState} />
+          <TestsView tests={challenge.tests || []} runState={runState}
+                     testCode={challenge.testCode} runResult={runResult} running={running} />
         )}
         {fileTab === 'notes' && (
           <NotesView value={notes} onChange={setNotes} />
@@ -380,9 +381,20 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
       <div className="px-4 py-3 flex items-center justify-between"
            style={{ background: '#fff', borderTop: '1px solid var(--line)' }}>
         <div className="flex items-center gap-3">
-          <button className="btn btn-ghost" onClick={onRun} disabled={submitting}>
-            <CI.Play /> Run tests
+          <button className="btn btn-ghost" onClick={onRun} disabled={submitting || running}>
+            {running ? <><CI.Spin className="spin" /> Running…</> : <><CI.Play /> Run tests</>}
           </button>
+          {runResult && !running && (
+            <span className="font-mono text-[11.5px]"
+                  style={{ color: runResult.compiled && runResult.failedTests === 0 && runResult.totalTests > 0
+                    ? 'var(--accent-ink)' : 'oklch(0.46 0.16 25)' }}>
+              {runResult.evaluated === false
+                ? 'not evaluated'
+                : runResult.compiled
+                  ? `${runResult.passedTests}/${runResult.totalTests} tests passed`
+                  : 'compile error'}
+            </span>
+          )}
           <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>
             <kbd>Cmd</kbd> + <kbd>Enter</kbd> to submit
           </span>
@@ -395,11 +407,50 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
   );
 }
 
-function TestsView({ tests, runState }) {
+function TestsView({ tests, runState, testCode, runResult, running }) {
+  // Real challenges carry the actual xUnit source in testCode; mock challenges
+  // carry a display-only test list in `tests`.
+  if (tests.length === 0) {
+    return (
+      <div style={{ padding: 16 }}>
+        <div className="eyebrow" style={{ color: 'var(--ide-mute)', fontSize: 10.5 }}>
+          // xunit test suite — your code is compiled together with this file
+        </div>
+        {running && (
+          <div className="mt-3 font-mono text-[12px]" style={{ color: 'var(--ide-mute)' }}>
+            Compiling and running tests…
+          </div>
+        )}
+        {runResult && !running && (
+          <pre className="mt-3 font-mono text-[12px]"
+               style={{
+                 whiteSpace: 'pre-wrap',
+                 color: runResult.compiled && runResult.failedTests === 0 && runResult.totalTests > 0
+                   ? 'var(--accent)' : 'var(--danger)',
+                 background: 'color-mix(in oklch, var(--ide-line) 30%, transparent)',
+                 padding: '10px 12px', borderRadius: 8,
+               }}>
+            {runResult.output || (runResult.compiled ? `${runResult.passedTests}/${runResult.totalTests} tests passed` : 'Compilation failed.')}
+          </pre>
+        )}
+        {testCode ? (
+          <pre className="mt-3 font-mono text-[12px]" style={{ whiteSpace: 'pre-wrap', color: 'var(--ide-fg)', lineHeight: 1.6 }}>
+            {testCode}
+          </pre>
+        ) : (
+          <div className="mt-3 text-[12.5px]" style={{ color: 'var(--ide-mute)' }}>
+            This challenge has no automated test suite — your submission is scored
+            against the evaluation criteria and reviewed.
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: 16 }}>
       <div className="eyebrow" style={{ color: 'var(--ide-mute)', fontSize: 10.5 }}>
-        // public test suite (4 cases)
+        // public test suite ({tests.length} cases)
       </div>
       <div className="mt-3 flex flex-col">
         {tests.map((t, i) => {
@@ -606,7 +657,12 @@ function EvaluationPanel({ kind, challenge, result, onClose, onNext }) {
                     score <b style={{ fontWeight: 600 }}>{result.score}</b> / 100
                   </div>
                 </div>
-                <p className="mt-1 text-[13.5px]" style={{ lineHeight: 1.55, textWrap: 'pretty' }}>
+                {Number.isFinite(result.testsTotal) && result.testsTotal > 0 && (
+                  <div className="mt-1 font-mono text-[12px] tabular-nums">
+                    {result.testsPassed}/{result.testsTotal} tests passed
+                  </div>
+                )}
+                <p className="mt-1 text-[13.5px]" style={{ lineHeight: 1.55, textWrap: 'pretty', whiteSpace: 'pre-wrap' }}>
                   {result._aiFeedback}
                 </p>
               </div>
@@ -668,6 +724,8 @@ function App() {
   const [fileTab, setFileTab] = cS('solution');
   const [problemMode, setProblemMode] = cS('problem');
   const [runState, setRunState] = cS(null);
+  const [runResult, setRunResult] = cS(null);
+  const [running, setRunning] = cS(false);
 
   const [submitting, setSubmitting] = cS(false);
   const [result, setResult] = cS(null);
@@ -727,16 +785,33 @@ function App() {
   });
 
   async function handleRunTests() {
-    if (!challenge || kind !== 'coding') return;
-    // Fake a test run with sequential reveal
-    const tests = challenge.tests || [];
+    if (!challenge || kind !== 'coding' || running) return;
     setFileTab('tests');
-    setRunState(tests.map(() => 'pending'));
-    for (let i = 0; i < tests.length; i++) {
-      setRunState(prev => prev.map((s, idx) => idx === i ? 'running' : s));
-      await new Promise(r => setTimeout(r, 450 + Math.random() * 300));
-      const passed = tests[i].expected === 'pass' && (code.length > challenge.starterCode.length + 40);
-      setRunState(prev => prev.map((s, idx) => idx === i ? (passed ? 'pass' : 'fail') : s));
+
+    if (t.demoMode && (challenge.tests || []).length > 0) {
+      // Demo mode: fake a test run with sequential reveal over the mock list.
+      const tests = challenge.tests || [];
+      setRunState(tests.map(() => 'pending'));
+      for (let i = 0; i < tests.length; i++) {
+        setRunState(prev => prev.map((s, idx) => idx === i ? 'running' : s));
+        await new Promise(r => setTimeout(r, 450 + Math.random() * 300));
+        const passed = tests[i].expected === 'pass' && (code.length > challenge.starterCode.length + 40);
+        setRunState(prev => prev.map((s, idx) => idx === i ? (passed ? 'pass' : 'fail') : s));
+      }
+      return;
+    }
+
+    // Real mode: the judge runner compiles the submission with the challenge's
+    // xUnit suite and reports pass counts — nothing is persisted.
+    setRunning(true);
+    setRunResult(null);
+    try {
+      const res = await runCodingTests({ apiBase: t.apiBase, demoMode: t.demoMode }, challenge.id, code);
+      setRunResult(res);
+    } catch (err) {
+      setRunResult({ evaluated: false, compiled: false, output: err.message || 'Test run failed.' });
+    } finally {
+      setRunning(false);
     }
   }
 
@@ -816,7 +891,7 @@ function App() {
                 fileTab={fileTab} setFileTab={setFileTab}
                 onRun={handleRunTests} onSubmit={handleSubmit}
                 submitting={submitting}
-                runState={runState}
+                runState={runState} runResult={runResult} running={running}
               />
             </>
           ) : (

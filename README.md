@@ -21,9 +21,16 @@ ASP.NET Core 8 backend and a React (Babel-in-browser) prototype frontend.
 - **Quiz evaluation** — deterministic scoring (option match, accepted-answer
   match, scenario keyword coverage) updates mastery, streaks, and the
   revision schedule.
+- **Code judge (HackerRank-style)** — coding challenges that carry an xUnit
+  test suite are compiled together with the learner's submission inside an
+  isolated runner container; the pass ratio becomes the score, all-green
+  means Passed, and failures/compile errors come back as feedback. The
+  editor's "Run tests" button executes without recording a submission.
+  Scenario challenges are scored by evaluation-criteria coverage.
 - **JWT auth**, per-user preferences (including goals), analytics dashboard.
-- **AI hooks** — Ollama-backed question generation / feedback services are
-  scaffolded but disabled by default (`AI:Ollama:Enabled`).
+- **AI feedback** — Ollama-backed coaching feedback is appended to challenge
+  submissions when `AI:Ollama:Enabled` is on (an Ollama instance with the
+  configured model must be reachable); everything works without it.
 
 ## Running with Docker (recommended)
 
@@ -36,6 +43,7 @@ docker compose up -d --build
 | Frontend (nginx) | http://localhost:8080 |
 | API + Swagger | http://localhost:5000/swagger |
 | PostgreSQL | localhost:5432 (`postgres`/`postgres`) |
+| Code runner (judge) | internal only — the API reaches it at `http://runner:8080` |
 
 Host ports can be overridden with `WEB_PORT`, `API_PORT`, `DB_PORT` env vars.
 On startup the API applies EF Core migrations and tops up seed data
@@ -95,6 +103,21 @@ Append entries to `QuestionPool()` in
 the next API start inserts anything missing (deduped by topic + prompt).
 Never reword an existing prompt in place; add a new entry instead.
 Questions can also be created at runtime via `POST /api/questions`.
+
+## Adding runnable coding challenges
+
+Append a `CodingChallengeSpec` to `CodingChallengePool()` in the same seeder.
+A challenge with `TestCode` (xUnit source) is auto-judged: the runner compiles
+`Solution.cs` (the submission) and `Tests.cs` (your suite) into one project
+and runs `dotnet test`. Conventions: keep the expected types in the global
+namespace, make tests deterministic (inject clocks, no I/O), and rely only on
+the standard library. A challenge with empty `TestCode` skips the judge and
+stays on the review/AI-feedback path.
+
+The runner (`src/TrainingPlatform.Runner`) has no published ports, is
+resource-capped in compose, and enforces a per-run timeout. It is dev-grade
+isolation — fine for a local learning platform, not for hostile multi-tenant
+traffic.
 
 ## Project layout
 

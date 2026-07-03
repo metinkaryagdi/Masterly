@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!-- The template folder is the scaffold copied per judge run — it must not
+       be compiled into the runner itself (Tests.cs references xunit). -->
+  <ItemGroup>
+    <Compile Remove="template/**" />
+    <Content Remove="template/**" />
+    <None Include="template/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

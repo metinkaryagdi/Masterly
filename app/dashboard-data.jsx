@@ -707,7 +707,32 @@ async function submitChallenge({ apiBase, demoMode }, kind, body) {
   const url = kind === 'coding'
     ? `${apiBase.replace(/\/$/, '')}/api/challenges/coding/submissions`
     : `${apiBase.replace(/\/$/, '')}/api/challenges/scenario/submissions`;
-  return fetchJson(url, { method: 'POST', body: JSON.stringify(body) });
+  const res = await fetchJson(url, { method: 'POST', body: JSON.stringify(body) });
+  // The API serializes enums as strings and carries feedback in `feedback`;
+  // normalise to the shape the evaluation panel expects.
+  if (res && typeof res.outcome === 'string') {
+    res.outcome = ({ PendingReview: 0, Passed: 1, NeedsWork: 2 })[res.outcome] ?? 0;
+  }
+  if (res && res.feedback && !res._aiFeedback) res._aiFeedback = res.feedback;
+  return res;
+}
+
+// Runs the learner's code against the challenge's test suite WITHOUT recording
+// a submission — the editor's "Run tests" button.
+async function runCodingTests({ apiBase, demoMode }, challengeId, code) {
+  if (demoMode) {
+    await new Promise(r => setTimeout(r, 900));
+    const plausible = (code || '').length > 120;
+    return {
+      evaluated: true, compiled: true,
+      totalTests: 4, passedTests: plausible ? 4 : 1, failedTests: plausible ? 0 : 3,
+      output: plausible ? 'All 4 tests passed.' : '1 of 4 tests passed.\n\nFAILED Demo_test\n  Expected true, got false.',
+    };
+  }
+  return fetchJson(`${apiBase.replace(/\/$/, '')}/api/challenges/coding/${encodeURIComponent(challengeId)}/run`, {
+    method: 'POST',
+    body: JSON.stringify({ submittedCode: code }),
+  });
 }
 
 async function fetchQuestion({ apiBase, demoMode }, questionId) {
@@ -798,7 +823,7 @@ Object.assign(window, {
   MOCK_DASHBOARD, MOCK_PLAN, MOCK_QUESTIONS, MOCK_TOPICS,
   MOCK_CODING_CHALLENGES, MOCK_SCENARIO_CHALLENGES,
   fetchTodayPlan, fetchDashboard, generatePlan, fetchQuestion, submitAnswer,
-  fetchTopics, fetchChallenge, submitChallenge,
+  fetchTopics, fetchChallenge, submitChallenge, runCodingTests,
   fetchPreferences, updatePreferences, completeOnboarding, probeHealth,
   getCurrentUser, getAuthToken,
 });

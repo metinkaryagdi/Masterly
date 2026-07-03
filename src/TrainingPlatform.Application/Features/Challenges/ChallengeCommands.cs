@@ -1,9 +1,12 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using TrainingPlatform.Application.Abstractions.AI;
+using TrainingPlatform.Application.Abstractions.Execution;
 using TrainingPlatform.Application.Abstractions.Persistence;
 using TrainingPlatform.Application.Abstractions.Time;
 using TrainingPlatform.Application.Common.Cqrs;
 using TrainingPlatform.Application.Common.Exceptions;
+using TrainingPlatform.Application.Services;
 using TrainingPlatform.Domain.Challenges;
 using TrainingPlatform.Domain.Common.Enumerations;
 using TrainingPlatform.Domain.Progress;
@@ -32,6 +35,8 @@ public sealed record CreateScenarioChallengeCommand(
 public sealed record SubmitCodingSubmissionCommand(Guid UserId, Guid CodingChallengeId, Guid? DailyStudyPlanId, string SubmittedCode, string Notes) : ICommand<SubmissionDto>;
 
 public sealed record SubmitScenarioSubmissionCommand(Guid UserId, Guid ScenarioChallengeId, Guid? DailyStudyPlanId, string ResponseText) : ICommand<SubmissionDto>;
+
+public sealed record RunCodingChallengeCommand(Guid UserId, Guid CodingChallengeId, string SubmittedCode) : ICommand<CodeRunDto>;
 
 public sealed class CreateCodingChallengeCommandValidator : AbstractValidator<CreateCodingChallengeCommand>
 {
@@ -77,6 +82,16 @@ public sealed class SubmitScenarioSubmissionCommandValidator : AbstractValidator
     }
 }
 
+public sealed class RunCodingChallengeCommandValidator : AbstractValidator<RunCodingChallengeCommand>
+{
+    public RunCodingChallengeCommandValidator()
+    {
+        RuleFor(command => command.UserId).NotEmpty();
+        RuleFor(command => command.CodingChallengeId).NotEmpty();
+        RuleFor(command => command.SubmittedCode).NotEmpty().MaximumLength(200_000);
+    }
+}
+
 public sealed class CreateCodingChallengeCommandHandler(
     ITrainingPlatformDbContext dbContext,
     IClock clock) : ICommandHandler<CreateCodingChallengeCommand, CodingChallengeDto>
@@ -108,7 +123,9 @@ public sealed class CreateCodingChallengeCommandHandler(
             challenge.EstimatedMinutes,
             challenge.EvaluationCriteria,
             challenge.StarterCode,
-            challenge.ExpectedOutcome);
+            challenge.ExpectedOutcome,
+            challenge.HasAutomatedTests,
+            challenge.TestCode);
     }
 }
 
@@ -147,51 +164,172 @@ public sealed class CreateScenarioChallengeCommandHandler(
 
 public sealed class SubmitCodingSubmissionCommandHandler(
     ITrainingPlatformDbContext dbContext,
+    ICodeExecutionService codeExecution,
+    ICodeFeedbackService codeFeedback,
     IClock clock) : ICommandHandler<SubmitCodingSubmissionCommand, SubmissionDto>
 {
     public async Task<SubmissionDto> Handle(SubmitCodingSubmissionCommand command, CancellationToken cancellationToken)
     {
-        await ChallengeCommandGuards.EnsureUserAndChallengeExist(command.UserId, command.CodingChallengeId, dbContext, cancellationToken);
+        var userExists = await dbContext.Users.AnyAsync(user => user.Id == command.UserId, cancellationToken);
+        var challenge = await dbContext.CodingChallenges
+            .AsNoTracking()
+            .SingleOrDefaultAsync(entry => entry.Id == command.CodingChallengeId, cancellationToken);
+        if (!userExists || challenge is null)
+        {
+            throw new NotFoundException("User or coding challenge was not found.");
+        }
 
+        var now = clock.UtcNow;
         var submission = CodingSubmission.Create(
             command.UserId,
             command.CodingChallengeId,
             command.DailyStudyPlanId,
             command.SubmittedCode,
             command.Notes,
-            clock.UtcNow);
+            now);
+
+        if (challenge.HasAutomatedTests && codeExecution.IsEnabled)
+        {
+            try
+            {
+                var run = await codeExecution.RunAsync(command.SubmittedCode, challenge.TestCode, cancellationToken);
+                var (score, outcome, feedback) = ChallengeEvaluation.ForCodeRun(run);
+                submission.RecordAutomatedEvaluation(
+                    score, outcome, run.Compiled ? run.PassedTests : 0, run.TotalTests, feedback, now);
+
+                await ChallengeCommandGuards.RecordChallengeProgress(
+                    dbContext, command.UserId, challenge.TopicId, coding: true,
+                    succeeded: outcome == ChallengeOutcome.Passed, now, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                // Runner unreachable or crashed — the submission stays PendingReview
+                // rather than failing the request.
+            }
+        }
+
+        // Optional AI coaching feedback. It never blocks or fails a submission:
+        // when Ollama is disabled or down this silently no-ops.
+        try
+        {
+            var ai = await codeFeedback.EvaluateAsync(
+                new CodeFeedbackRequest(challenge.Id, challenge.Description, command.SubmittedCode, "v1"),
+                cancellationToken);
+            if (!string.IsNullOrWhiteSpace(ai.Content))
+            {
+                submission.AppendFeedback($"AI feedback:\n{ai.Content.Trim()}", now);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // AI feedback is best-effort.
+        }
 
         await dbContext.CodingSubmissions.AddAsync(submission, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new SubmissionDto(submission.Id, submission.Score, submission.Outcome, submission.CreatedAtUtc);
+        return new SubmissionDto(
+            submission.Id, submission.Score, submission.Outcome, submission.CreatedAtUtc,
+            submission.TestsPassed, submission.TestsTotal, submission.Feedback);
     }
 }
 
 public sealed class SubmitScenarioSubmissionCommandHandler(
     ITrainingPlatformDbContext dbContext,
+    IScenarioEvaluationService scenarioEvaluation,
     IClock clock) : ICommandHandler<SubmitScenarioSubmissionCommand, SubmissionDto>
 {
     public async Task<SubmissionDto> Handle(SubmitScenarioSubmissionCommand command, CancellationToken cancellationToken)
     {
         var userExists = await dbContext.Users.AnyAsync(user => user.Id == command.UserId, cancellationToken);
-        var challengeExists = await dbContext.ScenarioChallenges.AnyAsync(challenge => challenge.Id == command.ScenarioChallengeId, cancellationToken);
-        if (!userExists || !challengeExists)
+        var challenge = await dbContext.ScenarioChallenges
+            .AsNoTracking()
+            .SingleOrDefaultAsync(entry => entry.Id == command.ScenarioChallengeId, cancellationToken);
+        if (!userExists || challenge is null)
         {
             throw new NotFoundException("User or scenario challenge was not found.");
         }
 
+        var now = clock.UtcNow;
         var submission = ScenarioSubmission.Create(
             command.UserId,
             command.ScenarioChallengeId,
             command.DailyStudyPlanId,
             command.ResponseText,
-            clock.UtcNow);
+            now);
+
+        // Deterministic criteria-coverage scoring, mirroring scenario questions.
+        var (score, outcome, feedback) = ChallengeEvaluation.ForScenarioResponse(challenge.EvaluationCriteria, command.ResponseText);
+        if (outcome != ChallengeOutcome.PendingReview)
+        {
+            submission.RecordAutomatedEvaluation(score, outcome, feedback, now);
+            await ChallengeCommandGuards.RecordChallengeProgress(
+                dbContext, command.UserId, challenge.TopicId, coding: false,
+                succeeded: outcome == ChallengeOutcome.Passed, now, cancellationToken);
+        }
+
+        // Optional AI coaching feedback — best-effort, never blocks the submission.
+        try
+        {
+            var ai = await scenarioEvaluation.EvaluateAsync(
+                new ScenarioEvaluationRequest(challenge.Id, challenge.Scenario, command.ResponseText, "v1"),
+                cancellationToken);
+            if (!string.IsNullOrWhiteSpace(ai.Content))
+            {
+                submission.AppendFeedback($"AI feedback:\n{ai.Content.Trim()}", now);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // AI feedback is best-effort.
+        }
 
         await dbContext.ScenarioSubmissions.AddAsync(submission, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new SubmissionDto(submission.Id, submission.Score, submission.Outcome, submission.CreatedAtUtc);
+        return new SubmissionDto(
+            submission.Id, submission.Score, submission.Outcome, submission.CreatedAtUtc,
+            null, null, submission.Feedback);
+    }
+}
+
+public sealed class RunCodingChallengeCommandHandler(
+    ITrainingPlatformDbContext dbContext,
+    ICodeExecutionService codeExecution) : ICommandHandler<RunCodingChallengeCommand, CodeRunDto>
+{
+    public async Task<CodeRunDto> Handle(RunCodingChallengeCommand command, CancellationToken cancellationToken)
+    {
+        var challenge = await dbContext.CodingChallenges
+            .AsNoTracking()
+            .SingleOrDefaultAsync(entry => entry.Id == command.CodingChallengeId, cancellationToken)
+            ?? throw new NotFoundException("The requested coding challenge was not found.");
+
+        if (!challenge.HasAutomatedTests)
+        {
+            return new CodeRunDto(false, false, 0, 0, 0,
+                "This challenge has no automated tests — submit for review instead.");
+        }
+
+        if (!codeExecution.IsEnabled)
+        {
+            return new CodeRunDto(false, false, 0, 0, 0,
+                "The test runner is not available in this environment.");
+        }
+
+        var run = await codeExecution.RunAsync(command.SubmittedCode, challenge.TestCode, cancellationToken);
+        return new CodeRunDto(true, run.Compiled, run.TotalTests, run.PassedTests, run.FailedTests, run.Output);
     }
 }
 
@@ -203,6 +341,35 @@ internal static class ChallengeCommandGuards
         if (!topicExists)
         {
             throw new NotFoundException("The requested topic was not found.");
+        }
+    }
+
+    /// <summary>Records a challenge attempt (and success) on the user's topic progress.</summary>
+    public static async Task RecordChallengeProgress(
+        ITrainingPlatformDbContext dbContext,
+        Guid userId,
+        Guid topicId,
+        bool coding,
+        bool succeeded,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var progress = await dbContext.TopicProgressEntries
+            .SingleOrDefaultAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+
+        if (progress is null)
+        {
+            progress = TopicProgress.Create(userId, topicId, now);
+            await dbContext.TopicProgressEntries.AddAsync(progress, cancellationToken);
+        }
+
+        if (coding)
+        {
+            progress.ApplyCodingChallengeResult(succeeded, now);
+        }
+        else
+        {
+            progress.ApplyScenarioChallengeResult(succeeded, now);
         }
     }
 

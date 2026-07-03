@@ -19,6 +19,7 @@ public sealed class CodingChallenge : Entity
         List<string> evaluationCriteria,
         string starterCode,
         string expectedOutcome,
+        string testCode,
         DateTime createdAtUtc)
         : base(id, createdAtUtc)
     {
@@ -30,6 +31,7 @@ public sealed class CodingChallenge : Entity
         EvaluationCriteria = evaluationCriteria;
         StarterCode = starterCode;
         ExpectedOutcome = expectedOutcome;
+        TestCode = testCode;
         IsActive = true;
     }
 
@@ -49,7 +51,16 @@ public sealed class CodingChallenge : Entity
 
     public string ExpectedOutcome { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// xUnit test source compiled together with the learner's submission by the
+    /// judge runner. Empty means the challenge has no automated tests and
+    /// submissions await manual/AI review.
+    /// </summary>
+    public string TestCode { get; private set; } = string.Empty;
+
     public bool IsActive { get; private set; }
+
+    public bool HasAutomatedTests => !string.IsNullOrWhiteSpace(TestCode);
 
     public static CodingChallenge Create(
         Guid topicId,
@@ -60,7 +71,8 @@ public sealed class CodingChallenge : Entity
         IEnumerable<string> evaluationCriteria,
         string starterCode,
         string expectedOutcome,
-        DateTime createdAtUtc)
+        DateTime createdAtUtc,
+        string testCode = "")
     {
         return new CodingChallenge(
             Guid.NewGuid(),
@@ -72,6 +84,7 @@ public sealed class CodingChallenge : Entity
             evaluationCriteria.Where(criterion => !string.IsNullOrWhiteSpace(criterion)).Select(criterion => criterion.Trim()).ToList(),
             starterCode,
             expectedOutcome,
+            testCode,
             createdAtUtc);
     }
 }
