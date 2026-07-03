@@ -15,7 +15,19 @@ public static class TrainingPlatformSeeder
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<TrainingPlatformDbContext>();
 
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        if (dbContext.Database.IsNpgsql())
+        {
+            // Real deployments evolve the schema through migrations. Databases
+            // created before migrations existed must be baselined once — see
+            // docker/baseline-migrations.sql.
+            await dbContext.Database.MigrateAsync(cancellationToken);
+        }
+        else
+        {
+            // Test hosts run on Sqlite, which cannot execute Npgsql-generated
+            // migrations; EnsureCreated builds the schema straight from the model.
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        }
 
         var now = DateTime.UtcNow;
 

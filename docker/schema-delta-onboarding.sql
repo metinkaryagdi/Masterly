@@ -1,9 +1,13 @@
 -- Schema delta for the onboarding feature (goals + topic self-assessments).
 --
--- The API creates its schema with EnsureCreated, which only runs against an
--- EMPTY database — it never alters existing tables. Fresh volumes get the new
--- schema automatically; a database created before this feature needs this
--- delta applied once:
+-- HISTORICAL: the project now evolves its schema through EF Core migrations
+-- (see Persistence/Migrations and docker/baseline-migrations.sql). This delta
+-- only matters for databases created before BOTH the onboarding feature and
+-- the migration switch.
+--
+-- The API used to create its schema with EnsureCreated, which only runs
+-- against an EMPTY database — it never alters existing tables. A database
+-- created before this feature needs this delta applied once:
 --
 --   Get-Content docker/schema-delta-onboarding.sql -Raw |
 --     docker exec -i training-db psql -U postgres -d training_platform -v ON_ERROR_STOP=1
