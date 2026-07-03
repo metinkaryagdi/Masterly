@@ -18,6 +18,7 @@ public sealed class DailyStudyPlanService : IDailyStudyPlanService
         IReadOnlyCollection<ScenarioChallenge> scenarioChallenges,
         IReadOnlyCollection<TopicProgress> progressEntries,
         IReadOnlyCollection<RevisionSchedule> revisionSchedules,
+        IReadOnlyCollection<UserAnswer> recentAnswers,
         DateTime studyDateUtc,
         DateTime generatedAtUtc)
     {
@@ -28,6 +29,19 @@ public sealed class DailyStudyPlanService : IDailyStudyPlanService
         var questionsByTopic = questions.GroupBy(question => question.TopicId).ToDictionary(group => group.Key, group => group.ToList());
         var eligibleTopics = BuildTopicCandidates(topics, progressLookup, scheduleLookup, generatedAtUtc);
         var distribution = CalculateDistribution(user.Preferences.DailyQuestionTarget);
+
+        // Questions the learner already answered correctly in the recent window
+        // are deprioritised: they only reappear when a topic's pool of fresh
+        // questions runs dry.
+        var recentCorrectQuestionIds = recentAnswers
+            .Where(answer => answer.WasCorrect)
+            .Select(answer => answer.QuestionId)
+            .ToHashSet();
+
+        // Seeded per user + study date: regenerating the same day's plan picks
+        // the same questions, while tomorrow's draw rotates through the pool.
+        var random = new Random(user.Id.GetHashCode() ^ studyDateUtc.Date.GetHashCode());
+
         var selectedQuestionIds = new HashSet<Guid>();
         var sequence = 1;
 
@@ -39,33 +53,21 @@ public sealed class DailyStudyPlanService : IDailyStudyPlanService
                 continue;
             }
 
-            foreach (var topic in eligibleTopics[category])
-            {
-                if (!questionsByTopic.TryGetValue(topic.Topic.Id, out var topicQuestions))
-                {
-                    continue;
-                }
+            sequence = FillQuota(
+                plan, eligibleTopics[category], questionsByTopic, recentCorrectQuestionIds,
+                selectedQuestionIds, random, quota, sequence, generatedAtUtc);
+        }
 
-                foreach (var question in topicQuestions.OrderBy(question => question.Difficulty).ThenBy(question => question.CreatedAtUtc))
-                {
-                    if (!selectedQuestionIds.Add(question.Id))
-                    {
-                        continue;
-                    }
-
-                    plan.AddItem(StudyPlanItemType.Question, question.Id, question.TopicId, category.ToString().ToLowerInvariant(), sequence++, topic.Priority, generatedAtUtc);
-
-                    if (--quota == 0)
-                    {
-                        break;
-                    }
-                }
-
-                if (quota == 0)
-                {
-                    break;
-                }
-            }
+        // Categories with no eligible topics (or dry pools) leave the plan under
+        // target; back-fill from every eligible topic so the daily question count
+        // holds whenever the pool allows.
+        var shortfall = user.Preferences.DailyQuestionTarget - selectedQuestionIds.Count;
+        if (shortfall > 0)
+        {
+            var allCandidates = eligibleTopics.Values.SelectMany(candidates => candidates).ToList();
+            sequence = FillQuota(
+                plan, allCandidates, questionsByTopic, recentCorrectQuestionIds,
+                selectedQuestionIds, random, shortfall, sequence, generatedAtUtc);
         }
 
         var orderedTopicsForChallenges = eligibleTopics
@@ -100,6 +102,108 @@ public sealed class DailyStudyPlanService : IDailyStudyPlanService
 
         return plan;
     }
+
+    /// <summary>
+    /// Draws up to <paramref name="quota"/> questions from the given topics'
+    /// pools, round-robin across topics so no single topic monopolises the plan.
+    /// Fresh questions (not recently answered correctly) are exhausted before
+    /// repeats are considered; within a topic, questions closest to the
+    /// learner's difficulty band come first, shuffled among ties.
+    /// </summary>
+    private static int FillQuota(
+        DailyStudyPlan plan,
+        IReadOnlyList<TopicCandidate> topicCandidates,
+        IReadOnlyDictionary<Guid, List<Question>> questionsByTopic,
+        HashSet<Guid> recentCorrectQuestionIds,
+        HashSet<Guid> selectedQuestionIds,
+        Random random,
+        int quota,
+        int sequence,
+        DateTime generatedAtUtc)
+    {
+        var queues = new List<(TopicCandidate Candidate, Queue<Question> Fresh, Queue<Question> Repeats)>();
+        foreach (var candidate in topicCandidates)
+        {
+            if (!questionsByTopic.TryGetValue(candidate.Topic.Id, out var pool))
+            {
+                continue;
+            }
+
+            var targetDifficulty = TargetDifficulty(candidate.Progress);
+            var ordered = pool
+                .Where(question => !selectedQuestionIds.Contains(question.Id))
+                .OrderBy(question => Math.Abs((int)question.Difficulty - (int)targetDifficulty))
+                .ThenBy(_ => random.Next())
+                .ToList();
+
+            var fresh = new Queue<Question>(ordered.Where(question => !recentCorrectQuestionIds.Contains(question.Id)));
+            var repeats = new Queue<Question>(ordered.Where(question => recentCorrectQuestionIds.Contains(question.Id)));
+            if (fresh.Count > 0 || repeats.Count > 0)
+            {
+                queues.Add((candidate, fresh, repeats));
+            }
+        }
+
+        foreach (var useRepeats in new[] { false, true })
+        {
+            while (quota > 0)
+            {
+                var progressed = false;
+                foreach (var (candidate, fresh, repeats) in queues)
+                {
+                    if (quota == 0)
+                    {
+                        break;
+                    }
+
+                    var queue = useRepeats ? repeats : fresh;
+                    while (queue.Count > 0)
+                    {
+                        var question = queue.Dequeue();
+                        if (!selectedQuestionIds.Add(question.Id))
+                        {
+                            continue;
+                        }
+
+                        plan.AddItem(
+                            StudyPlanItemType.Question,
+                            question.Id,
+                            question.TopicId,
+                            candidate.Category.ToString().ToLowerInvariant(),
+                            sequence++,
+                            candidate.Priority,
+                            generatedAtUtc);
+                        quota--;
+                        progressed = true;
+                        break;
+                    }
+                }
+
+                if (!progressed)
+                {
+                    break;
+                }
+            }
+
+            if (quota == 0)
+            {
+                break;
+            }
+        }
+
+        return sequence;
+    }
+
+    /// <summary>
+    /// The difficulty band a learner should mostly see for a topic: fundamentals
+    /// until mastery reaches 40, intermediate up to 70, advanced beyond that.
+    /// </summary>
+    private static TopicDifficulty TargetDifficulty(TopicProgress? progress) => (progress?.MasteryScore ?? 0) switch
+    {
+        < 40 => TopicDifficulty.Fundamental,
+        < 70 => TopicDifficulty.Intermediate,
+        _ => TopicDifficulty.Advanced,
+    };
 
     private static Dictionary<TopicCategory, int> CalculateDistribution(int totalQuestions)
     {

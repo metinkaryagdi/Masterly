@@ -48,6 +48,13 @@ public sealed class GenerateDailyStudyPlanCommandHandler(
         var progressEntries = await dbContext.TopicProgressEntries.Where(entry => entry.UserId == command.UserId).ToListAsync(cancellationToken);
         var revisionSchedules = await dbContext.RevisionSchedules.Where(entry => entry.UserId == command.UserId).ToListAsync(cancellationToken);
 
+        // Questions answered correctly inside this window are held back from new
+        // plans so the pool rotates instead of repeating what the learner just got right.
+        var recentAnswerCutoffUtc = studyDateUtc.AddDays(-7);
+        var recentAnswers = await dbContext.UserAnswers
+            .Where(answer => answer.UserId == command.UserId && answer.CreatedAtUtc >= recentAnswerCutoffUtc)
+            .ToListAsync(cancellationToken);
+
         var plan = dailyStudyPlanService.BuildPlan(
             user,
             topics,
@@ -56,6 +63,7 @@ public sealed class GenerateDailyStudyPlanCommandHandler(
             scenarioChallenges,
             progressEntries,
             revisionSchedules,
+            recentAnswers,
             studyDateUtc,
             clock.UtcNow);
 

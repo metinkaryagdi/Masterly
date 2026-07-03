@@ -16,6 +16,7 @@ public interface IDailyStudyPlanService
         IReadOnlyCollection<ScenarioChallenge> scenarioChallenges,
         IReadOnlyCollection<TopicProgress> progressEntries,
         IReadOnlyCollection<RevisionSchedule> revisionSchedules,
+        IReadOnlyCollection<UserAnswer> recentAnswers,
         DateTime studyDateUtc,
         DateTime generatedAtUtc);
 }
