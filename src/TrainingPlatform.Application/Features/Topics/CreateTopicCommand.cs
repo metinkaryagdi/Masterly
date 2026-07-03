@@ -62,6 +62,10 @@ public sealed class CreateTopicCommandHandler(
         await dbContext.Topics.AddAsync(topic, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new TopicDto(topic.Id, topic.Name, topic.Slug, topic.Description, topic.Difficulty, topic.DecayRate, topic.Dependencies.Select(item => item.DependsOnTopicId).ToList());
+        // A brand-new topic has no pool content yet, so counts and samples are empty.
+        return new TopicDto(
+            topic.Id, topic.Name, topic.Slug, topic.Description, topic.Difficulty, topic.DecayRate,
+            topic.Dependencies.Select(item => item.DependsOnTopicId).ToList(),
+            0, 0, 0, []);
     }
 }

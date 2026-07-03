@@ -20,7 +20,7 @@ public sealed class GetDailyStudyPlanQueryHandler(ITrainingPlatformDbContext dbC
 {
     public async Task<DailyStudyPlanDto> Handle(GetDailyStudyPlanQuery query, CancellationToken cancellationToken)
     {
-        var studyDateUtc = (query.StudyDateUtc ?? DateTime.UtcNow).Date;
+        var studyDateUtc = DateTime.SpecifyKind((query.StudyDateUtc ?? DateTime.UtcNow).Date, DateTimeKind.Utc);
         var plan = await dbContext.DailyStudyPlans
             .AsNoTracking()
             .Include(entry => entry.Items)

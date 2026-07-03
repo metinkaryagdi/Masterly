@@ -20,7 +20,7 @@ const TOPICS_PALETTES = {
 
 /* ─────────────── Helpers ─────────────── */
 function DifficultyPip({ value }) {
-  const filled = Math.max(1, Math.min(4, value || 1));
+  const filled = difficultyRank(value);
   return (
     <span className="difpip" title={difficultyLabel(filled)}>
       {[1,2,3,4].map(i => <i key={i} data-on={i <= filled ? 'true' : 'false'} />)}
@@ -381,7 +381,7 @@ function App() {
     } else if (t.sort === 'strong-first') {
       list.sort((a, b) => (masteryById[b.id]?.masteryScore ?? 0) - (masteryById[a.id]?.masteryScore ?? 0));
     } else if (t.sort === 'difficulty') {
-      list.sort((a, b) => a.difficulty - b.difficulty);
+      list.sort((a, b) => difficultyRank(a.difficulty) - difficultyRank(b.difficulty));
     } else if (t.sort === 'name') {
       list.sort((a, b) => a.name.localeCompare(b.name));
     }

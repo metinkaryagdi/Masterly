@@ -406,19 +406,20 @@ function App() {
         setPlan(planRes);
         setDash(dashRes);
 
-        // Resolve item
+        // Resolve item — planRes is null when no plan exists for today yet.
+        const planItems = planRes?.items || [];
         let resolvedItem = null;
         if (itemIdParam) {
-          resolvedItem = planRes.items.find(i => i.id === itemIdParam);
+          resolvedItem = planItems.find(i => i.id === itemIdParam);
         }
         if (!resolvedItem && !questionIdParam) {
-          resolvedItem = planRes.items.find(i => !i.isCompleted) || planRes.items[0];
+          resolvedItem = planItems.find(i => !i.isCompleted) || planItems[0];
         }
         setItem(resolvedItem);
 
         // Resolve question
         const qid = questionIdParam || resolvedItem?.referenceId;
-        if (!qid) throw new Error('No question to load.');
+        if (!qid) throw new Error("No plan for today yet — generate one from the dashboard first.");
         const q = await fetchQuestion({ apiBase: t.apiBase, demoMode: t.demoMode }, qid);
         if (cancelled) return;
         setQuestion(q);

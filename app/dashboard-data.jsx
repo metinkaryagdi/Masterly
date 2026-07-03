@@ -157,12 +157,26 @@ async function fetchJson(url, init = {}) {
   return res.json();
 }
 
+// The learner's local calendar date. Sent with plan requests so "today"
+// follows the user's day instead of flipping at UTC midnight.
+function localStudyDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 async function fetchTodayPlan({ apiBase, demoMode }) {
   if (demoMode) {
     await new Promise(r => setTimeout(r, 350));
     return MOCK_PLAN;
   }
-  return fetchJson(`${apiBase.replace(/\/$/, '')}/api/study-plans/today`);
+  try {
+    return await fetchJson(`${apiBase.replace(/\/$/, '')}/api/study-plans/today?studyDateUtc=${localStudyDate()}`);
+  } catch (err) {
+    // 404 just means no plan exists for today yet — a normal state, not an
+    // API outage. Callers render the "generate one" empty state for null.
+    if (err.status === 404) return null;
+    throw err;
+  }
 }
 
 async function fetchDashboard({ apiBase, demoMode }) {
@@ -180,7 +194,7 @@ async function generatePlan({ apiBase, demoMode }) {
   }
   return fetchJson(`${apiBase.replace(/\/$/, '')}/api/study-plans/generate`, {
     method: 'POST',
-    body: JSON.stringify({ studyDateUtc: null }),
+    body: JSON.stringify({ studyDateUtc: localStudyDate() }),
   });
 }
 

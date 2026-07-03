@@ -113,6 +113,28 @@ function App() {
   const [minutes, setMinutes] = sS(initialPrefs.minutesPerDay || 20);
   const [assessments, setAssessments] = sS(initialPrefs.assessments || {});
 
+  // What the server currently holds for the fields we sync. The debounced
+  // effect below only PUTs when local state actually differs from this, which
+  // cleanly absorbs both the mount run and the hydration echo (debounce
+  // coalescing makes run-counting unreliable). null = not hydrated yet.
+  const serverSnapshot = sR(null);
+  const snapshotOf = (goalsSet, mins) => JSON.stringify({ g: Array.from(goalsSet).sort(), m: mins });
+
+  // Server preferences are the source of truth for goals + study minutes;
+  // localStorage only provides the instant first paint.
+  sE(() => {
+    fetchPreferences({ apiBase: t.apiBase, demoMode: t.demoMode })
+      .then((p) => {
+        if (!p) return;
+        const serverGoals = new Set(Array.isArray(p.goals) ? p.goals : []);
+        const serverMinutes = p.dailyStudyMinutes || 20;
+        serverSnapshot.current = snapshotOf(serverGoals, serverMinutes);
+        setGoals(serverGoals);
+        setMinutes(serverMinutes);
+      })
+      .catch(() => { /* offline — keep local values, no sync this session */ });
+  }, [t.apiBase, t.demoMode]);
+
   // Profile
   const [name, setName] = sS(user?.displayName || '');
   sE(() => { setName(user?.displayName || ''); }, [user]);
@@ -161,12 +183,11 @@ function App() {
   };
 
   // Persist prefs (debounced).
-  // - Goals + assessments are UI-only for now (no backend model).
+  // - Goals and minutes are stored server-side (PUT /api/me/preferences);
+  //   assessments stay local — the backend snapshots them at onboarding.
   // - Minutes maps to the backend's DailyStudyMinutes; we also derive
   //   DailyQuestionTarget from it so the daily plan respects the new budget.
-  // We skip the first run so opening Settings doesn't immediately PUT.
   const prefsDebounce = sR(null);
-  const initialRender = sR(true);
   sE(() => {
     if (prefsDebounce.current) clearTimeout(prefsDebounce.current);
     prefsDebounce.current = setTimeout(() => {
@@ -178,9 +199,9 @@ function App() {
       };
       localStorage.setItem('training_prefs', JSON.stringify(prefs));
 
-      if (initialRender.current) {
-        initialRender.current = false;
-        return;
+      const snap = snapshotOf(goals, minutes);
+      if (serverSnapshot.current === null || snap === serverSnapshot.current) {
+        return; // not hydrated yet, or nothing the server cares about changed
       }
       updatePreferences({ apiBase: t.apiBase, demoMode: t.demoMode }, {
         dailyQuestionTarget: Math.max(1, Math.round(minutes / 2.5)),
@@ -188,7 +209,9 @@ function App() {
         dailyCodingChallengeTarget: 1,
         dailyScenarioChallengeTarget: 1,
         includeWeekends: true,
-      }).catch((err) => console.warn('Preferences sync failed:', err));
+        goals: Array.from(goals),
+      }).then(() => { serverSnapshot.current = snap; })
+        .catch((err) => console.warn('Preferences sync failed:', err));
     }, 600);
     return () => prefsDebounce.current && clearTimeout(prefsDebounce.current);
   }, [goals, minutes, assessments, t.apiBase, t.demoMode]);

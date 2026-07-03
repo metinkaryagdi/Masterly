@@ -43,8 +43,17 @@ function categoryLabel(c) {
   return map[c] || c;
 }
 function difficultyLabel(d) {
+  // The API serializes enums as strings ("Intermediate"); mocks use numbers.
+  if (typeof d === 'string' && d) return d;
   const map = { 1: 'Fundamental', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' };
   return map[d] || '—';
+}
+
+// Numeric rank (1-4) for a difficulty that may arrive as string or number.
+function difficultyRank(d) {
+  if (typeof d === 'number') return Math.max(1, Math.min(4, d || 1));
+  const order = { Fundamental: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
+  return order[d] || 1;
 }
 
 /* ─────────────── Priority dots (4-level) ─────────────── */

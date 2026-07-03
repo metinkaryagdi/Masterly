@@ -26,6 +26,9 @@ public sealed class GetTopicByIdQueryHandler(ITrainingPlatformDbContext dbContex
             .SingleOrDefaultAsync(entry => entry.Id == query.TopicId, cancellationToken)
             ?? throw new NotFoundException("The requested topic was not found.");
 
+        var summaries = await TopicContentSummary.LoadAsync(dbContext, [topic.Id], cancellationToken);
+        var summary = summaries.GetValueOrDefault(topic.Id, TopicContentSummary.Empty);
+
         return new TopicDto(
             topic.Id,
             topic.Name,
@@ -33,6 +36,10 @@ public sealed class GetTopicByIdQueryHandler(ITrainingPlatformDbContext dbContex
             topic.Description,
             topic.Difficulty,
             topic.DecayRate,
-            topic.Dependencies.Select(dependency => dependency.DependsOnTopicId).ToList());
+            topic.Dependencies.Select(dependency => dependency.DependsOnTopicId).ToList(),
+            summary.QuestionCount,
+            summary.CodingChallengeCount,
+            summary.ScenarioCount,
+            summary.SampleQuestions);
     }
 }

@@ -30,7 +30,10 @@ public sealed class GenerateDailyStudyPlanCommandHandler(
             .SingleOrDefaultAsync(entry => entry.Id == command.UserId, cancellationToken)
             ?? throw new NotFoundException("The requested user was not found.");
 
-        var studyDateUtc = (command.StudyDateUtc ?? clock.UtcNow).Date;
+        // Clients may send their local calendar date (so "today" follows the
+        // learner's day, not the server's UTC day). Normalise to a UTC-kinded
+        // midnight — Npgsql refuses unspecified kinds for timestamptz columns.
+        var studyDateUtc = DateTime.SpecifyKind((command.StudyDateUtc ?? clock.UtcNow).Date, DateTimeKind.Utc);
 
         var existingPlan = await dbContext.DailyStudyPlans
             .Include(plan => plan.Items)
