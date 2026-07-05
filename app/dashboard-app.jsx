@@ -37,10 +37,10 @@ function SectionHead({ eyebrow, title, action }) {
 /* ─────────────── Greeting ─────────────── */
 function Greeting({ user, plan }) {
   const hour = new Date().getHours();
-  const greet = hour < 5 ? 'Burning the midnight oil,'
-              : hour < 12 ? 'Good morning,'
-              : hour < 18 ? 'Good afternoon,'
-              : 'Good evening,';
+  const greet = hour < 5 ? 'Gece kuşu olmuşsun,'
+              : hour < 12 ? 'Günaydın,'
+              : hour < 18 ? 'İyi günler,'
+              : 'İyi akşamlar,';
   const name = (user?.displayName || 'learner').split(' ')[0];
   const remaining = plan ? plan.items.filter(i => !i.isCompleted).length : null;
 
@@ -54,10 +54,10 @@ function Greeting({ user, plan }) {
         </h1>
         <p className="mt-1.5 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
           {plan == null
-            ? "Let's calibrate today's plan."
+            ? 'Bugünün planını birlikte ayarlayalım.'
             : remaining === 0
-              ? "Today's plan is complete — that's a wrap. ✓"
-              : <>You have <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{remaining} items</span> left in today's plan.</>
+              ? 'Bugünün planı tamamlandı — bu kadar. ✓'
+              : <>Bugünün planında <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{remaining} öğe</span> kaldı.</>
           }
         </p>
       </div>
@@ -117,7 +117,7 @@ function App() {
       else setApiOnline(!anyFail);
 
       if (anyFail && !t.demoMode) {
-        setToast({ kind: 'error', msg: `Can't reach API at ${t.apiBase}. Flip on Demo mode in Tweaks.` });
+        setToast({ kind: 'error', msg: `API'ye ulaşılamıyor (${t.apiBase}). Tweaks panelinden Demo modunu açabilirsin.` });
       }
 
       setLoadingPlan(false);
@@ -144,9 +144,9 @@ function App() {
     try {
       const p = await generatePlan({ apiBase: t.apiBase, demoMode: t.demoMode });
       setPlan(p);
-      setToast({ kind: 'success', msg: 'Plan refreshed for today.' });
+      setToast({ kind: 'success', msg: 'Bugünün planı yenilendi.' });
     } catch (err) {
-      setToast({ kind: 'error', msg: err.message || 'Generation failed.' });
+      setToast({ kind: 'error', msg: err.message || 'Plan oluşturulamadı.' });
     } finally {
       setGenerating(false);
     }
@@ -192,13 +192,13 @@ function App() {
           <section className="card card-pad rise" style={{ animationDelay: '.16s' }}>
             <SectionHead
               eyebrow="// topic mastery"
-              title={`Mastery across ${dash?.topicMastery?.length ?? 8} topics`}
+              title={`${dash?.topicMastery?.length ?? 8} konuda ustalık`}
               action={
                 <div className="flex items-center gap-1.5">
                   <button className={`nav-tab text-[12.5px]`} data-active={t.masteryView === 'grid'}
-                          onClick={() => setTweak('masteryView', 'grid')}>Grid</button>
+                          onClick={() => setTweak('masteryView', 'grid')}>Izgara</button>
                   <button className={`nav-tab text-[12.5px]`} data-active={t.masteryView === 'radial'}
-                          onClick={() => setTweak('masteryView', 'radial')}>Radial</button>
+                          onClick={() => setTweak('masteryView', 'radial')}>Radyal</button>
                 </div>
               }
             />
@@ -208,7 +208,7 @@ function App() {
           </section>
           <div className="rise" style={{ animationDelay: '.22s' }}>
             <WeakAreasCard areas={dash?.weakAreas || []} loading={loadingDash}
-                           onPractice={() => setToast({ kind: 'info', msg: 'Targeted practice will use the weakest 5 topics.' })} />
+                           onPractice={() => setToast({ kind: 'info', msg: 'Hedefli antrenman en zayıf 5 konuyu kullanır.' })} />
           </div>
         </div>
 
@@ -286,28 +286,28 @@ function StatsTrioVertical({ dash, loading }) {
     <>
       <StatCardWide
         icon={<Icon.Flame />}
-        label="Study streak"
+        label="Çalışma serisi"
         value={dash.consistencyDays}
         suffix="days in a row"
         accent
         trend={attemptsTrend}
-        sub={<>Your longest yet — keep going.</>}
+        sub={<>Şimdiye kadarki en uzun serin — devam et.</>}
       />
       <StatCardWide
         icon={<Icon.Clock />}
-        label="Avg response time"
+        label="Ort. yanıt süresi"
         value={dash.averageResponseTimeSeconds.toFixed(0)}
         suffix="seconds"
         trend={[...accuracyTrend].reverse()}
-        sub={<>Faster than last week.</>}
+        sub={<>Geçen haftadan daha hızlı.</>}
       />
       <StatCardWide
         icon={<Icon.Trophy />}
-        label="Challenge success"
+        label="Görev başarısı"
         value={Math.round(dash.challengeSuccessRate * 100)}
         suffix="% scored ≥ 70"
         trend={accuracyTrend}
-        sub={<>Across coding &amp; scenarios.</>}
+        sub={<>Kod ve senaryo görevleri genelinde.</>}
       />
     </>
   );

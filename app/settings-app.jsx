@@ -17,29 +17,29 @@ const SETTINGS_PALETTES = {
 };
 
 const GOALS = [
-  { id: 'interview', label: 'Sharpen for a system design interview' },
-  { id: 'ef',        label: 'Get production-ready in EF Core 8' },
-  { id: 'cqrs',      label: 'Master CQRS + Clean Architecture' },
-  { id: 'auth',      label: 'Strengthen security & JWT fundamentals' },
-  { id: 'perf',      label: 'Speed up slow APIs and DB queries' },
-  { id: 'pg',        label: 'Level up on PostgreSQL internals' },
-  { id: 'daily',     label: 'Just practice daily, indefinitely' },
+  { id: 'interview', label: 'Sistem tasarımı mülakatına hazırlan' },
+  { id: 'ef',        label: "EF Core 8'de üretim seviyesine gel" },
+  { id: 'cqrs',      label: 'CQRS + Clean Architecture ustası ol' },
+  { id: 'auth',      label: 'Güvenlik ve JWT temellerini güçlendir' },
+  { id: 'perf',      label: 'Yavaş API ve sorguları hızlandır' },
+  { id: 'pg',        label: "PostgreSQL iç yapısında derinleş" },
+  { id: 'daily',     label: 'Sadece her gün düzenli çalış' },
 ];
 
 const LEVELS = [
-  { id: 'novice',   label: 'Novice' },
-  { id: 'familiar', label: 'Familiar' },
-  { id: 'strong',   label: 'Strong' },
+  { id: 'novice',   label: 'Acemi' },
+  { id: 'familiar', label: 'Aşina' },
+  { id: 'strong',   label: 'Güçlü' },
 ];
 
 const SECTIONS = [
-  { id: 'profile',        label: 'Profile' },
-  { id: 'learning',       label: 'Learning preferences' },
-  { id: 'assessment',     label: 'Self-assessment' },
-  { id: 'appearance',     label: 'Appearance' },
-  { id: 'notifications',  label: 'Notifications' },
-  { id: 'data',           label: 'Data &amp; account' },
-  { id: 'danger',         label: 'Danger zone' },
+  { id: 'profile',        label: 'Profil' },
+  { id: 'learning',       label: 'Öğrenme tercihleri' },
+  { id: 'assessment',     label: 'Öz değerlendirme' },
+  { id: 'appearance',     label: 'Görünüm' },
+  { id: 'notifications',  label: 'Bildirimler' },
+  { id: 'data',           label: 'Veri ve hesap' },
+  { id: 'danger',         label: 'Tehlikeli bölge' },
 ];
 
 /* ─────────────── Toggle ─────────────── */
@@ -69,7 +69,7 @@ function Section({ id, eyebrow, title, description, children, saved }) {
             </p>
           )}
         </div>
-        {saved && <span className="saved">✓ Saved</span>}
+        {saved && <span className="saved">✓ Kaydedildi</span>}
       </div>
       <div className="hr" />
       <div className="sec-body">{children}</div>
@@ -366,7 +366,7 @@ function App() {
                      title="What we're calibrating for"
                      description="Your daily plan is biased toward these. Change them anytime."
                      saved={!!savedAt['learning']}>
-              <Row label="Goals" hint="Pick all that apply.">
+              <Row label="Hedefler" hint="Uyanların hepsini seç.">
                 <div className="flex flex-wrap gap-2">
                   {GOALS.map((g) => {
                     const selected = goals.has(g.id);

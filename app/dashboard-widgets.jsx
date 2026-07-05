@@ -33,19 +33,21 @@ function TypeTile({ type }) {
   return <span className="type-tile type-question"><Icon.Question /></span>;
 }
 function typeLabel(type) {
-  if (type === StudyPlanItemType.CodingChallenge) return 'Coding';
-  if (type === StudyPlanItemType.ScenarioChallenge) return 'Scenario';
-  return 'Question';
+  if (type === StudyPlanItemType.CodingChallenge) return 'Kod';
+  if (type === StudyPlanItemType.ScenarioChallenge) return 'Senaryo';
+  return 'Soru';
 }
 function categoryLabel(c) {
   // SourceCategory is freeform string in backend; keep it readable
-  const map = { WeakArea: 'Weak area', Revision: 'Revision', NewMaterial: 'New', Stretch: 'Stretch' };
+  const map = { WeakArea: 'Zayıf alan', Revision: 'Tekrar', NewMaterial: 'Yeni', Stretch: 'Zorlayıcı', weak: 'zayıf', recent: 'yakın', strong: 'güçlü', new: 'yeni', challenge: 'görev' };
   return map[c] || c;
 }
 function difficultyLabel(d) {
   // The API serializes enums as strings ("Intermediate"); mocks use numbers.
   if (typeof d === 'string' && d) return d;
-  const map = { 1: 'Fundamental', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' };
+  const en = { Fundamental: 'Temel', Intermediate: 'Orta', Advanced: 'İleri', Expert: 'Uzman' };
+  if (typeof d === 'string' && en[d]) return en[d];
+  const map = { 1: 'Temel', 2: 'Orta', 3: 'İleri', 4: 'Uzman' };
   return map[d] || '—';
 }
 
@@ -153,14 +155,14 @@ function TodayCard({ plan, loading, onGenerate, generating, onItemClick }) {
   const total = plan ? plan.items.length : 0;
   const pct = total ? completed / total : 0;
   const firstActive = plan?.items.find(i => !i.isCompleted);
-  const statusLabel = pct === 1 ? 'Completed' : pct > 0 ? 'In progress' : 'Not started';
+  const statusLabel = pct === 1 ? 'Tamamlandı' : pct > 0 ? 'Devam ediyor' : 'Başlanmadı';
 
   return (
     <section className="card overflow-hidden">
       <div className="card-pad flex items-start justify-between gap-4 pb-3">
         <div>
           <div className="eyebrow flex items-center gap-2">
-            <Icon.Calendar /> Today's plan
+            <Icon.Calendar /> Bugünün planı
           </div>
           <h2 className="mt-2 font-semibold tracking-tight"
               style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
@@ -173,7 +175,7 @@ function TodayCard({ plan, loading, onGenerate, generating, onItemClick }) {
             </span>
             {plan && (
               <span className="text-[11.5px] font-mono" style={{ color: 'var(--ink-mute)' }}>
-                Generated {fmtRelative(plan.generatedAtUtc)}
+                {fmtRelative(plan.generatedAtUtc)} oluşturuldu
               </span>
             )}
           </div>
@@ -225,7 +227,7 @@ function TodayCard({ plan, loading, onGenerate, generating, onItemClick }) {
       <div className="px-6 py-4 flex items-center justify-between gap-3">
         <div className="text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>
           {firstActive
-            ? <>Next up: <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{firstActive.title}</span></>
+            ? <>Sırada: <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{firstActive.title}</span></>
             : 'You\'re all caught up for today.'}
         </div>
         <div className="flex items-center gap-2">
@@ -234,7 +236,7 @@ function TodayCard({ plan, loading, onGenerate, generating, onItemClick }) {
           </button>
           <button className="btn btn-primary" disabled={!firstActive}
                   onClick={() => firstActive && onItemClick && onItemClick(firstActive)}>
-            {firstActive ? <>Continue practicing <Icon.Arrow /></> : 'All done'}
+            {firstActive ? <>Antrenmana devam et <Icon.Arrow /></> : 'Hepsi tamam'}
           </button>
         </div>
       </div>
@@ -248,13 +250,13 @@ function EmptyPlan({ onGenerate, generating }) {
          style={{ borderColor: 'var(--line-strong)', background: 'oklch(0.985 0.006 88)' }}>
       <Icon.Spark />
       <div className="font-medium mt-3" style={{ fontSize: 15, color: 'var(--ink)' }}>
-        No plan for today yet.
+        Bugün için henüz plan yok.
       </div>
       <p className="mt-1 text-[13px]" style={{ color: 'var(--ink-soft)' }}>
-        Generate one and we'll calibrate it to your weakest topics and revision schedule.
+        Bir plan oluştur — en zayıf konularına ve tekrar takvimine göre ayarlayalım.
       </p>
       <button className="btn btn-primary mt-4" onClick={onGenerate} disabled={generating}>
-        {generating ? <><Icon.Spinner /> Generating…</> : <>Generate today's plan <Icon.Arrow /></>}
+        {generating ? <><Icon.Spinner /> Oluşturuluyor…</> : <>Bugünün planını oluştur <Icon.Arrow /></>}
       </button>
     </div>
   );
@@ -264,10 +266,10 @@ function fmtRelative(iso) {
   const t = new Date(iso).getTime();
   const diff = Date.now() - t;
   const m = Math.round(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return 'az önce';
+  if (m < 60) return `${m} dk önce`;
   const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h} sa önce`;
   const d = Math.round(h / 24);
   return `${d}d ago`;
 }
@@ -472,14 +474,14 @@ function WeakAreasCard({ areas, loading, onPractice }) {
     <section className="card card-pad">
       <div className="flex items-start justify-between">
         <div>
-          <div className="eyebrow flex items-center gap-2"><Icon.AlertCircle /> Weak areas</div>
+          <div className="eyebrow flex items-center gap-2"><Icon.AlertCircle /> Zayıf alanlar</div>
           <h3 className="mt-2 font-semibold tracking-tight"
               style={{ fontSize: 17, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-            Where we'll focus next
+            Sırada odaklanacaklarımız
           </h3>
         </div>
         <button className="btn btn-soft" onClick={onPractice}>
-          Practice these <Icon.Arrow />
+          Bunları çalış <Icon.Arrow />
         </button>
       </div>
       {loading ? (
@@ -572,10 +574,10 @@ function TrendChart({ points, loading }) {
     <section className="card card-pad">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <div className="eyebrow flex items-center gap-2"><Icon.Spark /> Learning trend</div>
+          <div className="eyebrow flex items-center gap-2"><Icon.Spark /> Öğrenme eğilimi</div>
           <h3 className="mt-2 font-semibold tracking-tight"
               style={{ fontSize: 17, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-            Last 14 days · accuracy &amp; volume
+            Son 14 gün · doğruluk ve hacim
           </h3>
         </div>
         <div className="flex items-center gap-4 text-[11.5px] font-mono" style={{ color: 'var(--ink-mute)' }}>

@@ -32,19 +32,19 @@ const OIcon = {
 };
 
 const GOALS = [
-  { id: 'interview', label: 'Sharpen for a system design interview',  hint: 'Architecture, scaling, trade-offs',          icon: OIcon.Target },
-  { id: 'ef',        label: 'Get production-ready in EF Core 8',       hint: 'Querying, migrations, performance',          icon: OIcon.Stack  },
-  { id: 'cqrs',      label: 'Master CQRS + Clean Architecture',        hint: 'Pipelines, boundaries, testability',         icon: OIcon.Stack  },
-  { id: 'auth',      label: 'Strengthen security & JWT fundamentals',  hint: 'Tokens, rotation, identity',                 icon: OIcon.Lock   },
-  { id: 'perf',      label: 'Speed up slow APIs and noisy DB queries', hint: 'Caching, indexing, profiling',               icon: OIcon.Zap    },
-  { id: 'pg',        label: 'Level up on PostgreSQL internals',         hint: 'EXPLAIN, locking, partitioning',             icon: OIcon.DB     },
-  { id: 'daily',     label: 'Just practice daily, indefinitely',        hint: "We'll keep you sharp on a rolling plan",     icon: OIcon.Calendar },
+  { id: 'interview', label: 'Sistem tasarımı mülakatına hazırlan',      hint: 'Mimari, ölçekleme, ödünleşimler',            icon: OIcon.Target },
+  { id: 'ef',        label: "EF Core 8'de üretim seviyesine gel",       hint: 'Sorgular, migration, performans',            icon: OIcon.Stack  },
+  { id: 'cqrs',      label: 'CQRS + Clean Architecture ustası ol',      hint: 'Pipeline, sınırlar, test edilebilirlik',     icon: OIcon.Stack  },
+  { id: 'auth',      label: 'Güvenlik ve JWT temellerini güçlendir',    hint: 'Token, rotasyon, kimlik',                    icon: OIcon.Lock   },
+  { id: 'perf',      label: 'Yavaş API ve sorguları hızlandır',         hint: 'Önbellek, indeks, profil',                   icon: OIcon.Zap    },
+  { id: 'pg',        label: "PostgreSQL iç yapısında derinleş",         hint: 'EXPLAIN, kilitler, bölümleme',               icon: OIcon.DB     },
+  { id: 'daily',     label: 'Sadece her gün düzenli çalış',             hint: 'Dönen planla seni formda tutarız',           icon: OIcon.Calendar },
 ];
 
 const SKILL_LEVELS = [
-  { id: 'novice',     label: 'Novice'     },
-  { id: 'familiar',   label: 'Familiar'   },
-  { id: 'strong',     label: 'Strong'     },
+  { id: 'novice',     label: 'Acemi'      },
+  { id: 'familiar',   label: 'Aşina'      },
+  { id: 'strong',     label: 'Güçlü'      },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -70,7 +70,7 @@ function Topbar({ step, totalSteps, onSkip }) {
       <div>
         {onSkip ? (
           <button className="btn-text font-medium" onClick={onSkip}>
-            Skip for now
+            Şimdilik geç
           </button>
         ) : <span className="w-[100px]" />}
       </div>
@@ -123,10 +123,10 @@ function StepWelcome({ user, onNext }) {
       ))}
 
       <div className="relative z-10 text-center container-narrow">
-        <div className="eyebrow mb-5">// step 01 · welcome</div>
+        <div className="eyebrow mb-5">// adım 01 · hoş geldin</div>
         <h1 className="font-semibold tracking-tight mx-auto"
             style={{ fontSize: 52, letterSpacing: '-0.035em', lineHeight: 1.05, color: 'var(--ink)', maxWidth: 560, textWrap: 'balance' }}>
-          Welcome aboard, <span style={{ color: 'var(--accent-ink)' }}>{(user?.displayName || 'learner').split(' ')[0]}</span>.
+          Aramıza hoş geldin, <span style={{ color: 'var(--accent-ink)' }}>{(user?.displayName || 'öğrenci').split(' ')[0]}</span>.
         </h1>
         <p className="mt-5 text-[16px] mx-auto"
            style={{ color: 'var(--ink-soft)', lineHeight: 1.55, textWrap: 'pretty', maxWidth: 540 }}>
@@ -135,7 +135,7 @@ function StepWelcome({ user, onNext }) {
 
         <div className="mt-10 flex items-center justify-center gap-3">
           <button className="btn btn-primary btn-lg" onClick={onNext}>
-            Let's go <OIcon.Arrow />
+            Başlayalım <OIcon.Arrow />
           </button>
           <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>
             takes ~2 minutes
@@ -182,7 +182,7 @@ function StepGoals({ goals, setGoals, minutes, setMinutes, onBack, onNext }) {
 
   return (
     <div className="container-wide pb-20 stage-enter">
-      <div className="eyebrow">// step 02 · what's the goal?</div>
+      <div className="eyebrow">// adım 02 · hedefin ne?</div>
       <h1 className="mt-2 font-semibold tracking-tight"
           style={{ fontSize: 32, letterSpacing: '-0.028em', color: 'var(--ink)', lineHeight: 1.15 }}>
         What are you here for?
@@ -222,7 +222,7 @@ function StepGoals({ goals, setGoals, minutes, setMinutes, onBack, onNext }) {
           <div>
             <div className="eyebrow">time budget</div>
             <div className="mt-1.5 text-[14.5px] font-medium" style={{ color: 'var(--ink)' }}>
-              Roughly how many minutes a day can you spend?
+              Günde aşağı yukarı kaç dakika ayırabilirsin?
             </div>
           </div>
           <div className="font-semibold tabular-nums"
@@ -249,10 +249,10 @@ function StepGoals({ goals, setGoals, minutes, setMinutes, onBack, onNext }) {
       </div>
 
       <StageFooter
-        left={<button className="btn btn-ghost" onClick={onBack}><OIcon.Back /> Back</button>}
+        left={<button className="btn btn-ghost" onClick={onBack}><OIcon.Back /> Geri</button>}
         right={
           <button className="btn btn-primary btn-lg" disabled={!canNext} onClick={onNext}>
-            Continue <OIcon.Arrow />
+            Devam et <OIcon.Arrow />
           </button>
         }
         hint={canNext ? null : 'Pick at least one goal'}
@@ -276,13 +276,13 @@ function StepAssessment({ assessments, setAssessments, topics, onBack, onNext })
 
   return (
     <div className="container-wide pb-20 stage-enter">
-      <div className="eyebrow">// step 03 · self-assessment</div>
+      <div className="eyebrow">// adım 03 · öz değerlendirme</div>
       <h1 className="mt-2 font-semibold tracking-tight"
           style={{ fontSize: 32, letterSpacing: '-0.028em', color: 'var(--ink)', lineHeight: 1.15 }}>
-        Where do you stand today?
+        Bugün hangi seviyedesin?
       </h1>
       <p className="mt-2 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
-        Best guess is fine — we'll refine it from your first few answers. Be honest about "Strong"; we won't waste your time on basics.
+        Tahmin yeterli — ilk cevaplarından sonra inceltiriz. "Güçlü" derken dürüst ol; temellerle vaktini harcamayız.
       </p>
 
       {/* Progress */}
@@ -325,10 +325,10 @@ function StepAssessment({ assessments, setAssessments, topics, onBack, onNext })
       </div>
 
       <StageFooter
-        left={<button className="btn btn-ghost" onClick={onBack}><OIcon.Back /> Back</button>}
+        left={<button className="btn btn-ghost" onClick={onBack}><OIcon.Back /> Geri</button>}
         right={
           <button className="btn btn-primary btn-lg" disabled={!canNext} onClick={onNext}>
-            Generate my plan <OIcon.Arrow />
+            Planımı oluştur <OIcon.Arrow />
           </button>
         }
         hint={canNext ? null : `${total - filled} to go`}
@@ -374,7 +374,7 @@ function StepGenerating({ onDone, demoMode, apiBase, skipGen }) {
   return (
     <div className="container-narrow pb-20 stage-enter flex flex-col items-center"
          style={{ minHeight: 'calc(100vh - 80px)', justifyContent: 'center' }}>
-      <div className="eyebrow">// step 04 · generating</div>
+      <div className="eyebrow">// adım 04 · plan oluşturuluyor</div>
       <h1 className="mt-2 font-semibold tracking-tight text-center"
           style={{ fontSize: 30, letterSpacing: '-0.028em', color: 'var(--ink)', lineHeight: 1.15 }}>
         Tailoring your first plan.
@@ -526,7 +526,7 @@ function StepReveal({ goals, minutes, assessments, plan, onFinish }) {
 
         <div className="mt-10">
           <button className="btn btn-primary btn-lg" onClick={onFinish}>
-            Open today's plan <OIcon.Arrow />
+            Bugünün planını aç <OIcon.Arrow />
           </button>
         </div>
       </div>
@@ -684,7 +684,7 @@ function App() {
 
         <TweakSection label="Jump to step" />
         <div className="grid grid-cols-5 gap-1.5">
-          {['Welcome', 'Goals', 'Levels', 'Generating', 'Reveal'].map((label, i) => (
+          {['Hoş geldin', 'Hedefler', 'Seviyeler', 'Oluşturma', 'Sonuç'].map((label, i) => (
             <button key={i}
                     className="text-[10.5px] py-1.5 rounded-md"
                     style={{

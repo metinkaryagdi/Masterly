@@ -33,7 +33,7 @@ function getParam(name) {
 function DifficultyPips({ value }) {
   const order = { Fundamental: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
   const filled = typeof value === 'string' ? (order[value] || 1) : Math.max(1, Math.min(4, value || 1));
-  const label = ['', 'Fundamental', 'Intermediate', 'Advanced', 'Expert'][filled];
+  const label = ['', 'Temel', 'Orta', 'İleri', 'Uzman'][filled];
   return (
     <span className="inline-flex items-center gap-2">
       <span className="difpip">
@@ -51,7 +51,7 @@ function PracticeTop({ planItems, currentIndex, onExit, elapsedSec, showTimer })
   return (
     <header className="topbar">
       <div className="max-w-[860px] mx-auto px-7 flex items-center gap-4" style={{ height: 60 }}>
-        <button className="btn-icon" onClick={onExit} title="Exit practice" aria-label="Exit">
+        <button className="btn-icon" onClick={onExit} title="Antrenmandan çık" aria-label="Çık">
           <PIcon.Close />
         </button>
 
@@ -93,9 +93,9 @@ function fmtTime(s) {
 
 /* ─────────────── Question header ─────────────── */
 function QuestionHeader({ question, item }) {
-  const typeLabel = question.questionType === QuestionType.MultipleChoice ? 'Multiple choice'
-                  : question.questionType === QuestionType.ShortAnswer ? 'Short answer'
-                  : 'Scenario';
+  const typeLabel = question.questionType === QuestionType.MultipleChoice ? 'Çoktan seçmeli'
+                  : question.questionType === QuestionType.ShortAnswer ? 'Kısa cevap'
+                  : 'Senaryo';
   const isChallenge = item && item.itemType !== StudyPlanItemType.Question;
 
   return (
@@ -106,14 +106,14 @@ function QuestionHeader({ question, item }) {
           {TOPIC_NAMES[question.topicId] || question.topicId}
         </span>
         <span className="topic-chip">
-          {isChallenge && (item.itemType === StudyPlanItemType.CodingChallenge ? 'Coding challenge' : 'Scenario challenge')}
+          {isChallenge && (item.itemType === StudyPlanItemType.CodingChallenge ? 'Kod görevi' : 'Senaryo görevi')}
           {!isChallenge && typeLabel}
         </span>
         <span className="topic-chip">
           <DifficultyPips value={question.difficulty} />
         </span>
         <span className="font-mono text-[11px] ml-auto" style={{ color: 'var(--ink-mute)' }}>
-          ~{Math.round((question.estimatedSolvingTimeSeconds || 300) / 60)} min · pass ≥ {question.minimumPassingScore}
+          ~{Math.round((question.estimatedSolvingTimeSeconds || 300) / 60)} dk · geçme ≥ {question.minimumPassingScore}
         </span>
       </div>
 
@@ -202,21 +202,21 @@ function FreeText({ question, value, onChange, locked, isLong }) {
         disabled={locked}
         placeholder={
           isLong
-            ? 'Walk through your approach — data model, endpoints, edge cases. Keystrokes will be measured for response time.'
-            : 'Type your answer here.'
+            ? 'Yaklaşımını adım adım anlat — veri modeli, uçlar, sınır durumlar. Yanıt süresi ölçülüyor.'
+            : 'Cevabını buraya yaz.'
         }
       />
       <div className="mt-2 flex items-center justify-between text-[11.5px] font-mono"
            style={{ color: 'var(--ink-mute)' }}>
-        <span>{length} chars{length < minLen ? <> · <span style={{ color: 'var(--warn)' }}>needs ≥ {minLen}</span></> : null}</span>
-        <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</span>
+        <span>{length} karakter{length < minLen ? <> · <span style={{ color: 'var(--warn)' }}>en az {minLen} gerekli</span></> : null}</span>
+        <span>Göndermek için <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
       </div>
     </div>
   );
 }
 
 /* ─────────────── Evaluation result ─────────────── */
-function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNext }) {
+function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNext, backLabel, nextLabel, doneLabel }) {
   const correct = result.wasCorrect;
   return (
     <section className="mt-7 slide-up flex flex-col gap-4">
@@ -230,10 +230,10 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
           <div className="flex items-baseline justify-between gap-3">
             <div className="font-semibold tracking-tight"
                  style={{ fontSize: 18, letterSpacing: '-0.02em' }}>
-              {correct ? 'Correct.' : 'Not quite.'}
+              {correct ? 'Doğru.' : 'Tam değil.'}
             </div>
             <div className="font-mono tabular-nums" style={{ fontSize: 13 }}>
-              score <b style={{ fontWeight: 600 }}>{result.score}</b> / 100
+              puan <b style={{ fontWeight: 600 }}>{result.score}</b> / 100
             </div>
           </div>
           <p className="mt-1 text-[13.5px]" style={{ lineHeight: 1.55, textWrap: 'pretty' }}>
@@ -244,7 +244,7 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
 
       {/* Mastery delta */}
       <div className="card p-5">
-        <div className="eyebrow flex items-center gap-2"><PIcon.Sparkle /> Mastery update</div>
+        <div className="eyebrow flex items-center gap-2"><PIcon.Sparkle /> Ustalık güncellemesi</div>
         <div className="mt-3 flex items-center gap-5">
           <div className="flex-1">
             <div className="flex items-baseline justify-between mb-1.5">
@@ -277,16 +277,16 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-xl border p-3" style={{ borderColor: 'var(--line)' }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>Next review</div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>Sonraki tekrar</div>
             <div className="mt-1.5 text-[14px] font-medium" style={{ letterSpacing: '-0.01em' }}>
               {fmtNextReview(result.nextReviewAtUtc)}
             </div>
             <div className="font-mono text-[11px] mt-0.5" style={{ color: 'var(--ink-mute)' }}>
-              {new Date(result.nextReviewAtUtc).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+              {new Date(result.nextReviewAtUtc).toLocaleDateString('tr-TR', { weekday: 'short', month: 'short', day: 'numeric' })}
             </div>
           </div>
           <div className="rounded-xl border p-3" style={{ borderColor: 'var(--line)' }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>Forgetting risk</div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>Unutma riski</div>
             <div className="mt-1.5 flex items-center gap-2">
               <span className="font-semibold tabular-nums" style={{ fontSize: 16 }}>
                 {Math.round(result.forgettingRisk * 100)}%
@@ -296,7 +296,7 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
                       background: result.forgettingRisk > 0.5 ? 'oklch(0.96 0.05 25)' : result.forgettingRisk > 0.25 ? 'oklch(0.96 0.05 70)' : 'oklch(0.95 0.04 155)',
                       color:      result.forgettingRisk > 0.5 ? 'oklch(0.46 0.16 25)' : result.forgettingRisk > 0.25 ? 'oklch(0.46 0.14 70)' : 'oklch(0.38 0.10 155)',
                     }}>
-                {result.forgettingRisk > 0.5 ? 'high' : result.forgettingRisk > 0.25 ? 'rising' : 'stable'}
+                {result.forgettingRisk > 0.5 ? 'yüksek' : result.forgettingRisk > 0.25 ? 'artıyor' : 'stabil'}
               </span>
             </div>
           </div>
@@ -305,7 +305,7 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
 
       {/* Explanation */}
       <div className="card p-5">
-        <div className="eyebrow flex items-center gap-2">// explanation</div>
+        <div className="eyebrow flex items-center gap-2">// açıklama</div>
         <p className="mt-3 text-[14px]"
            style={{ color: 'var(--ink-soft)', lineHeight: 1.7, textWrap: 'pretty' }}>
           {result.explanation}
@@ -315,10 +315,10 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
       {/* CTAs */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <button className="btn btn-ghost btn-lg" onClick={onBack}>
-          <PIcon.Back /> Back to today's plan
+          <PIcon.Back /> {backLabel || 'Bugünün planına dön'}
         </button>
         <button className="btn btn-primary btn-lg" onClick={onNext}>
-          {hasNext ? <>Next question <Icon.Arrow /></> : <>Plan complete <Icon.Check /></>}
+          {hasNext ? <>{nextLabel || 'Sonraki soru'} <Icon.Arrow /></> : <>{doneLabel || 'Plan tamamlandı'} <Icon.Check /></>}
         </button>
       </div>
     </section>
@@ -328,11 +328,11 @@ function EvaluationCard({ result, question, masteryBefore, onNext, onBack, hasNe
 function fmtNextReview(iso) {
   const diff = new Date(iso).getTime() - Date.now();
   const days = Math.max(0, Math.round(diff / (24 * 3600 * 1000)));
-  if (days === 0) return 'Later today';
-  if (days === 1) return 'Tomorrow';
-  if (days < 7) return `In ${days} days`;
-  if (days < 14) return `In 1 week`;
-  return `In ${Math.round(days / 7)} weeks`;
+  if (days === 0) return 'Bugün içinde';
+  if (days === 1) return 'Yarın';
+  if (days < 7) return `${days} gün sonra`;
+  if (days < 14) return `1 hafta sonra`;
+  return `${Math.round(days / 7)} hafta sonra`;
 }
 
 /* ─────────────── Empty / Error states ─────────────── */
@@ -350,6 +350,50 @@ function EmptyState({ title, body, action }) {
   );
 }
 
+/* ─────────────── Mod seçimi (Test / Yazılı / Lab) ─────────────── */
+const PRACTICE_MODES = [
+  { id: 'plan',   title: 'Günün Planı', hint: 'karma',           desc: 'Bugünün planından kaldığın yerden devam et — soru ve görev karışık.' },
+  { id: 'test',   title: 'Test',        hint: 'çoktan seçmeli',  desc: 'Havuzdan çoktan seçmeli sorularla hızlı bir tur at.' },
+  { id: 'yazili', title: 'Yazılı',      hint: 'açık uçlu',       desc: 'Kısa cevap ve senaryo soruları — kendi cümlelerinle anlat.' },
+  { id: 'lab',    title: 'Lab',         hint: 'kod editörü',     desc: 'Gerçek bir kod görevi: çöz, testleri koştur, puanını al.' },
+];
+
+function ModePicker({ onPick, busyMode }) {
+  return (
+    <main className="container-x py-10">
+      <div className="eyebrow">// antrenman</div>
+      <h1 className="mt-2 font-semibold tracking-tight"
+          style={{ fontSize: 28, letterSpacing: '-0.025em', color: 'var(--ink)' }}>
+        Bugün nasıl çalışmak istersin?
+      </h1>
+      <p className="mt-1.5 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
+        Test, yazılı ya da lab — hepsi ustalık puanını ve tekrar takvimini besler.
+      </p>
+      <div className="mt-6 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        {PRACTICE_MODES.map((mode) => (
+          <button key={mode.id} type="button" className="card p-5 text-left"
+                  style={{ cursor: 'pointer', opacity: busyMode && busyMode !== mode.id ? 0.6 : 1 }}
+                  disabled={!!busyMode}
+                  onClick={() => onPick(mode.id)}>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold tracking-tight" style={{ fontSize: 18, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+                {mode.title}
+              </span>
+              <span className="font-mono text-[10.5px] px-2 py-0.5 rounded-md"
+                    style={{ background: 'var(--accent-tint)', color: 'var(--accent-ink)' }}>
+                {busyMode === mode.id ? 'hazırlanıyor…' : mode.hint}
+              </span>
+            </div>
+            <p className="mt-2 text-[13.5px]" style={{ color: 'var(--ink-soft)', lineHeight: 1.55 }}>
+              {mode.desc}
+            </p>
+          </button>
+        ))}
+      </div>
+    </main>
+  );
+}
+
 /* ─────────────── Main App ─────────────── */
 function App() {
   const [t, setTweak] = useTweaks(PRACTICE_TWEAKS);
@@ -357,6 +401,7 @@ function App() {
   // 1. Resolve current item from URL
   const itemIdParam = uM(() => getParam('item'), []);
   const questionIdParam = uM(() => getParam('question'), []);
+  const modeParam = uM(() => getParam('mode'), []);
 
   const [plan, setPlan] = uS(null);
   const [item, setItem] = uS(null);
@@ -364,6 +409,11 @@ function App() {
   const [dash, setDash] = uS(null);
   const [loading, setLoading] = uS(true);
   const [errMsg, setErrMsg] = uS(null);
+
+  // Mode picker + typed sessions (Test / Yazılı). Lab redirects to Challenge.html.
+  const [showPicker, setShowPicker] = uS(false);
+  const [pickerBusy, setPickerBusy] = uS(null);
+  const [session, setSession] = uS(null); // { questions: [...], index }
 
   const [selectedOptionId, setSelected] = uS(null);
   const [textAnswer, setTextAnswer] = uS('');
@@ -390,7 +440,16 @@ function App() {
     }
   }, []);
 
-  // Load plan + dashboard, then question
+  const resetSolvingState = () => {
+    setSelected(null);
+    setTextAnswer('');
+    setEvaluation(null);
+    startRef.current = Date.now();
+    setElapsed(0);
+  };
+
+  // Load: no URL params → mode picker; mode=test|yazili → typed pool session;
+  // otherwise the classic plan/item flow.
   uE(() => {
     let cancelled = false;
     setLoading(true);
@@ -398,6 +457,41 @@ function App() {
 
     (async () => {
       try {
+        // Mode picker: opened plain from the nav.
+        if (!itemIdParam && !questionIdParam && !modeParam) {
+          setShowPicker(true);
+          setLoading(false);
+          return;
+        }
+
+        // Typed session: draw from the whole pool, filtered by question type.
+        if (modeParam === 'test' || modeParam === 'yazili') {
+          const [allQuestions, dashRes] = await Promise.all([
+            fetchAllQuestions({ apiBase: t.apiBase, demoMode: t.demoMode }),
+            fetchDashboard({ apiBase: t.apiBase, demoMode: t.demoMode }),
+          ]);
+          if (cancelled) return;
+          setDash(dashRes);
+
+          const wanted = modeParam === 'test'
+            ? [QuestionType.MultipleChoice]
+            : [QuestionType.ShortAnswer, QuestionType.Scenario];
+          const filtered = (allQuestions || []).filter(q => wanted.includes(q.questionType));
+          if (filtered.length === 0) throw new Error('Bu mod için havuzda soru bulunamadı.');
+
+          const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 10);
+          setSession({ questions: shuffled, index: 0 });
+
+          const first = shuffled[0];
+          setQuestion(first);
+          const m = dashRes.topicMastery.find(x => x.topicId === first.topicId);
+          setMasteryBefore(m ? m.masteryScore : 50);
+          resetSolvingState();
+          setLoading(false);
+          return;
+        }
+
+        // Plan / single-question flow.
         const [planRes, dashRes] = await Promise.all([
           fetchTodayPlan({ apiBase: t.apiBase, demoMode: t.demoMode }),
           fetchDashboard({ apiBase: t.apiBase, demoMode: t.demoMode }),
@@ -419,7 +513,7 @@ function App() {
 
         // Resolve question
         const qid = questionIdParam || resolvedItem?.referenceId;
-        if (!qid) throw new Error("No plan for today yet — generate one from the dashboard first.");
+        if (!qid) throw new Error('Bugün için plan yok — önce panelden bir plan oluştur.');
         const q = await fetchQuestion({ apiBase: t.apiBase, demoMode: t.demoMode }, qid);
         if (cancelled) return;
         setQuestion(q);
@@ -428,21 +522,53 @@ function App() {
         const m = dashRes.topicMastery.find(x => x.topicId === q.topicId);
         setMasteryBefore(m ? m.masteryScore : 50);
 
-        // Reset solving state
-        setSelected(null);
-        setTextAnswer('');
-        setEvaluation(null);
-        startRef.current = Date.now();
-        setElapsed(0);
+        resetSolvingState();
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
-        setErrMsg(err.message || 'Failed to load.');
+        setErrMsg(err.message || 'Yükleme başarısız oldu.');
         setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [itemIdParam, questionIdParam, t.apiBase, t.demoMode]);
+  }, [itemIdParam, questionIdParam, modeParam, t.apiBase, t.demoMode]);
+
+  // Mode picker actions. Lab needs a coding challenge id; the plan card
+  // resumes today's plan when one exists.
+  async function handlePickMode(modeId) {
+    if (modeId === 'test' || modeId === 'yazili') {
+      window.location.href = `Practice.html?mode=${modeId}`;
+      return;
+    }
+
+    setPickerBusy(modeId);
+    try {
+      if (modeId === 'plan') {
+        const planRes = await fetchTodayPlan({ apiBase: t.apiBase, demoMode: t.demoMode });
+        const next = planRes?.items?.find(i => !i.isCompleted) || planRes?.items?.[0];
+        window.location.href = next ? `Practice.html?item=${encodeURIComponent(next.id)}` : 'Dashboard.html';
+        return;
+      }
+
+      // Lab: today's plan challenge first, otherwise a sample from the catalogue.
+      const planRes = await fetchTodayPlan({ apiBase: t.apiBase, demoMode: t.demoMode }).catch(() => null);
+      const planLab = planRes?.items?.find(i => i.itemType === StudyPlanItemType.CodingChallenge && !i.isCompleted);
+      if (planLab) {
+        window.location.href = `Challenge.html?kind=coding&id=${encodeURIComponent(planLab.referenceId)}&plan=${encodeURIComponent(planRes.id)}`;
+        return;
+      }
+      const topics = await fetchTopics({ apiBase: t.apiBase, demoMode: t.demoMode });
+      const samples = (topics || []).flatMap(topic => topic.sampleQuestions || []);
+      const lab = samples.filter(s => s.type === 'CodingChallenge');
+      if (lab.length === 0) throw new Error('Kod görevi bulunamadı.');
+      const picked = lab[Math.floor(Math.random() * lab.length)];
+      window.location.href = `Challenge.html?kind=coding&id=${encodeURIComponent(picked.id)}`;
+    } catch (err) {
+      setPickerBusy(null);
+      setErrMsg(err.message || 'Mod açılamadı.');
+      setShowPicker(false);
+    }
+  }
 
   // Timer tick
   uE(() => {
@@ -514,6 +640,22 @@ function App() {
   }
 
   function handleNext() {
+    if (session) {
+      const nextIdx = session.index + 1;
+      if (nextIdx < session.questions.length) {
+        const nextQ = session.questions[nextIdx];
+        setSession({ ...session, index: nextIdx });
+        setQuestion(nextQ);
+        const m = dash?.topicMastery?.find(x => x.topicId === nextQ.topicId);
+        setMasteryBefore(m ? m.masteryScore : 50);
+        resetSolvingState();
+        window.scrollTo({ top: 0 });
+      } else {
+        window.location.href = 'Practice.html';
+      }
+      return;
+    }
+
     const nxt = findNextItem();
     if (nxt) window.location.href = `Practice.html?item=${encodeURIComponent(nxt.id)}`;
     else window.location.href = 'Dashboard.html';
@@ -524,25 +666,34 @@ function App() {
   }
 
   const currentIndex = uM(() => {
+    if (session) return session.index;
     if (!plan || !item) return 0;
     return plan.items.findIndex(i => i.id === item.id);
-  }, [plan, item]);
+  }, [plan, item, session]);
 
-  const hasNext = !!findNextItem();
+  const stepperItems = session
+    ? session.questions.map((q, i) => ({ id: q.id, isCompleted: i < session.index }))
+    : plan?.items;
+
+  const hasNext = session
+    ? session.index + 1 < session.questions.length
+    : !!findNextItem();
   const isScenario = question && question.questionType !== QuestionType.MultipleChoice;
   const isLongAnswer = question && question.questionType === QuestionType.Scenario;
 
   return (
     <>
       <PracticeTop
-        planItems={plan?.items}
+        planItems={stepperItems}
         currentIndex={currentIndex}
         onExit={handleExit}
         elapsedSec={elapsed}
         showTimer={t.showTimer}
       />
 
-      <main className="container-x py-10">
+      {!loading && showPicker && <ModePicker onPick={handlePickMode} busyMode={pickerBusy} />}
+
+      {!showPicker && <main className="container-x py-10">
         {loading && (
           <div className="flex flex-col gap-3 mt-4">
             <div className="skel h-[18px] w-[120px]" />
@@ -557,9 +708,9 @@ function App() {
 
         {!loading && errMsg && (
           <EmptyState
-            title="Couldn't load the question."
+            title="Soru yüklenemedi."
             body={errMsg}
-            action={<button className="btn btn-primary" onClick={handleExit}>Back to plan</button>}
+            action={<button className="btn btn-primary" onClick={handleExit}>Panele dön</button>}
           />
         )}
 
@@ -588,7 +739,7 @@ function App() {
             {!evaluation && (
               <div className="mt-6 flex items-center justify-between gap-3">
                 <span className="text-[12.5px]" style={{ color: 'var(--ink-mute)' }}>
-                  Take your time — speed factors in, but accuracy weighs more.
+                  Acele etme — hız da hesaba katılır ama doğruluk daha ağır basar.
                 </span>
                 <button
                   className="btn btn-primary btn-lg"
@@ -596,8 +747,8 @@ function App() {
                   disabled={!canSubmit() || submitting}
                 >
                   {submitting
-                    ? <><Icon.Spinner /> Submitting…</>
-                    : <>Submit answer <PIcon.Send /></>
+                    ? <><Icon.Spinner /> Gönderiliyor…</>
+                    : <>Cevabı gönder <PIcon.Send /></>
                   }
                 </button>
               </div>
@@ -609,8 +760,10 @@ function App() {
                 question={question}
                 masteryBefore={masteryBefore}
                 onNext={handleNext}
-                onBack={handleExit}
+                onBack={session ? () => { window.location.href = 'Practice.html'; } : handleExit}
                 hasNext={hasNext}
+                backLabel={session ? 'Mod seçimine dön' : undefined}
+                doneLabel={session ? 'Tur tamamlandı' : undefined}
               />
             )}
           </div>
@@ -619,12 +772,12 @@ function App() {
         {/* Empty plan fallback */}
         {!loading && !errMsg && !question && (
           <EmptyState
-            title="No plan to practice."
-            body="Head back to today's plan and generate one — we'll calibrate it to your weakest topics."
-            action={<button className="btn btn-primary" onClick={handleExit}>Open dashboard</button>}
+            title="Çalışılacak plan yok."
+            body="Panele dönüp bugünün planını oluştur — en zayıf konularına göre ayarlayacağız."
+            action={<button className="btn btn-primary" onClick={handleExit}>Paneli aç</button>}
           />
         )}
-      </main>
+      </main>}
 
       <TweaksPanel>
         <TweakSection label="Visual" />

@@ -745,6 +745,15 @@ async function fetchQuestion({ apiBase, demoMode }, questionId) {
   return fetchJson(`${apiBase.replace(/\/$/, '')}/api/questions/${encodeURIComponent(questionId)}`);
 }
 
+// The whole question pool — practice modes (test / yazılı) filter it by type.
+async function fetchAllQuestions({ apiBase, demoMode }) {
+  if (demoMode) {
+    await new Promise(r => setTimeout(r, 250));
+    return Object.values(MOCK_QUESTIONS);
+  }
+  return fetchJson(`${apiBase.replace(/\/$/, '')}/api/questions`);
+}
+
 /* ─────────────── Health probe ─────────────── */
 async function probeHealth({ apiBase }) {
   const ctrl = new AbortController();
@@ -822,7 +831,7 @@ Object.assign(window, {
   PREFERENCE_DEFAULTS,
   MOCK_DASHBOARD, MOCK_PLAN, MOCK_QUESTIONS, MOCK_TOPICS,
   MOCK_CODING_CHALLENGES, MOCK_SCENARIO_CHALLENGES,
-  fetchTodayPlan, fetchDashboard, generatePlan, fetchQuestion, submitAnswer,
+  fetchTodayPlan, fetchDashboard, generatePlan, fetchQuestion, fetchAllQuestions, submitAnswer,
   fetchTopics, fetchChallenge, submitChallenge, runCodingTests,
   fetchPreferences, updatePreferences, completeOnboarding, probeHealth,
   getCurrentUser, getAuthToken,

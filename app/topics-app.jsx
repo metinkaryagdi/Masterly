@@ -30,7 +30,7 @@ function DifficultyPip({ value }) {
 
 function RiskBadge({ value }) {
   const level = value > 0.5 ? 'high' : value > 0.25 ? 'med' : 'low';
-  const label = level === 'high' ? 'High decay' : level === 'med' ? 'Decay rising' : 'Stable';
+  const label = level === 'high' ? 'Hızlı unutma' : level === 'med' ? 'Unutma artıyor' : 'Stabil';
   const cls = level === 'high' ? 'risk-high' : level === 'med' ? 'risk-med' : 'risk-low';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-mono ${cls}`}>
@@ -90,7 +90,7 @@ function SampleQuestionRow({ q, onClick }) {
         <div className="flex items-center gap-2 mt-1">
           <DifficultyPip value={q.difficulty} />
           <span className="font-mono text-[10.5px]" style={{ color: 'var(--ink-mute)' }}>
-            {q.type === 'Question' ? 'Question' : q.type === 'CodingChallenge' ? 'Coding' : 'Scenario'}
+            {q.type === 'Question' ? 'Soru' : q.type === 'CodingChallenge' ? 'Kod' : 'Senaryo'}
           </span>
         </div>
       </div>
@@ -107,7 +107,7 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
   if (!topic) {
     return (
       <div className="card p-10 text-center">
-        <p style={{ color: 'var(--ink-mute)' }}>Select a topic to see its mastery, dependencies, and sample questions.</p>
+        <p style={{ color: 'var(--ink-mute)' }}>Ustalık, ön koşullar ve örnek soruları görmek için bir konu seç.</p>
       </div>
     );
   }
@@ -174,10 +174,10 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
       {/* Stat tiles */}
       <div className="grid grid-cols-3 gap-3 p-5"
            style={{ background: 'oklch(0.985 0.006 88)' }}>
-        <StatTile label="Accuracy" value={Math.round(accuracy * 100)} suffix="%" />
-        <StatTile label="Decay rate" value={(topic.decayRate * 100).toFixed(0)} suffix="% / day"
+        <StatTile label="Doğruluk" value={Math.round(accuracy * 100)} suffix="%" />
+        <StatTile label="Unutma hızı" value={(topic.decayRate * 100).toFixed(0)} suffix="% / gün"
                   sub={topic.decayRate > 0.3 ? 'fast forgetting' : topic.decayRate > 0.2 ? 'normal' : 'slow forgetting'} />
-        <StatTile label="Forgetting risk" value={Math.round(risk * 100)} suffix="%"
+        <StatTile label="Unutma riski" value={Math.round(risk * 100)} suffix="%"
                   sub={risk > 0.5 ? 'review soon' : risk > 0.25 ? 'review this week' : 'on track'} />
       </div>
 
@@ -187,7 +187,7 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
       {(deps.length > 0 || dependents.length > 0) && (
         <>
           <div className="px-7 py-5">
-            <div className="eyebrow flex items-center gap-2">// prerequisites &amp; unlocks</div>
+            <div className="eyebrow flex items-center gap-2">// ön koşullar ve açtıkları</div>
             <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'auto 1fr' }}>
               {deps.length > 0 && (
                 <>
@@ -233,10 +233,10 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
       <div className="px-7 py-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="eyebrow">// sample items</div>
+            <div className="eyebrow">// örnek öğeler</div>
             <div className="mt-1 text-[14px] font-medium"
                  style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-              Try a question right now
+              Hemen bir soru dene
             </div>
           </div>
           <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>
@@ -246,7 +246,7 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
         <div className="flex flex-col gap-2">
           {topic.sampleQuestions.length === 0 ? (
             <div className="text-[13px] py-6 text-center" style={{ color: 'var(--ink-mute)' }}>
-              No previews loaded for this topic yet.
+              Bu konu için henüz önizleme yok.
             </div>
           ) : (
             topic.sampleQuestions.map((q) => (
@@ -261,14 +261,14 @@ function TopicDetail({ topic, mastery, allTopics, onSelectTopic, onStartPractice
       <div className="px-7 py-4 flex flex-wrap items-center justify-between gap-3"
            style={{ background: 'oklch(0.985 0.006 88)' }}>
         <div className="text-[12.5px]" style={{ color: 'var(--ink-soft)' }}>
-          We'll prioritize {risk > 0.4 ? 'revision' : 'new material'} based on your current mastery.
+          Mevcut ustalığına göre {risk > 0.4 ? 'tekrara' : 'yeni konulara'} öncelik vereceğiz.
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn btn-ghost" onClick={() => alert('Adds this topic\'s weakest items to today\'s plan.')}>
-            Add to today's plan
+          <button className="btn btn-ghost" onClick={() => alert('Bu konunun en zayıf öğelerini bugünün planına ekler.')}>
+            Bugünün planına ekle
           </button>
           <button className="btn btn-primary btn-lg" onClick={() => onStartPractice(topic)}>
-            Start focused practice <Icon.Arrow />
+            Odaklı antrenman başlat <Icon.Arrow />
           </button>
         </div>
       </div>
@@ -295,9 +295,9 @@ function StatTile({ label, value, suffix, sub }) {
 /* ─────────────── Sort control ─────────────── */
 function SortControl({ value, onChange }) {
   const options = [
-    { id: 'weak-first',   label: 'Weak first' },
-    { id: 'strong-first', label: 'Strong first' },
-    { id: 'difficulty',   label: 'Difficulty' },
+    { id: 'weak-first',   label: 'Önce zayıf' },
+    { id: 'strong-first', label: 'Önce güçlü' },
+    { id: 'difficulty',   label: 'Zorluk' },
     { id: 'name',         label: 'Name' },
   ];
   return (
@@ -432,7 +432,7 @@ function App() {
         {/* Hero */}
         <div className="flex items-end justify-between gap-4 mb-7 rise">
           <div>
-            <div className="eyebrow">// catalogue</div>
+            <div className="eyebrow">// konu kataloğu</div>
             <h1 className="mt-2 font-semibold tracking-tight"
                 style={{ fontSize: 30, letterSpacing: '-0.028em', color: 'var(--ink)', lineHeight: 1.15 }}>
               Topics
@@ -440,7 +440,7 @@ function App() {
             <p className="mt-1.5 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
               {loading
                 ? <span className="skel inline-block h-[18px] w-[260px] align-middle" />
-                : <>{topics.length} topics · avg mastery <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{aggregate.avg}</span> · <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{aggregate.atRisk}</span> at risk of decay</>
+                : <>{topics.length} konu · ort. ustalık <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{aggregate.avg}</span> · <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{aggregate.atRisk}</span> konu unutulma riskinde</>
               }
             </p>
           </div>

@@ -146,7 +146,7 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
   return (
     <header className="topbar">
       <div className="container-x flex items-center gap-4" style={{ height: 60 }}>
-        <button className="btn-icon" onClick={onExit} title="Exit" aria-label="Exit">
+        <button className="btn-icon" onClick={onExit} title="Çık" aria-label="Çık">
           <CI.Close />
         </button>
         <a href="Dashboard.html" className="hidden md:flex items-center gap-2.5"
@@ -160,7 +160,7 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
         <div className="flex items-center gap-2 flex-1 min-w-0 pl-4"
              style={{ borderLeft: '1px solid var(--line)' }}>
           <span className="topic-chip">
-            {kind === 'coding' ? 'Coding challenge' : 'Scenario challenge'}
+            {kind === 'coding' ? 'Kod görevi' : 'Senaryo görevi'}
           </span>
           {challenge && (
             <span className="text-[13.5px] font-medium truncate"
@@ -230,7 +230,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
         <div className="flex items-center justify-between">
           <div className="eyebrow">// problem</div>
           <span className="font-mono text-[10.5px]" style={{ color: 'var(--ink-mute)' }}>
-            {challenge.evaluationCriteria.length} criteria
+            {challenge.evaluationCriteria.length} kriter
           </span>
         </div>
         <h1 className="mt-2 font-semibold tracking-tight"
@@ -253,7 +253,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
         <div className="tabs">
           {['problem', 'criteria', 'hints'].map(m => (
             <button key={m} data-active={mode === m} onClick={() => setMode(m)}>
-              {m === 'problem' ? 'Problem' : m === 'criteria' ? `Criteria (${challenge.evaluationCriteria.length})` : `Hints (${challenge.hints?.length || 0})`}
+              {m === 'problem' ? 'Problem' : m === 'criteria' ? `Kriterler (${challenge.evaluationCriteria.length})` : `İpuçları (${challenge.hints?.length || 0})`}
             </button>
           ))}
         </div>
@@ -264,7 +264,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
           <>
             <div className="prose-md">{renderMd(challenge.description)}</div>
             <div className="mt-5 p-4 rounded-xl" style={{ background: 'oklch(0.985 0.005 88)', border: '1px solid var(--line)' }}>
-              <div className="eyebrow" style={{ fontSize: 10.5 }}>expected outcome</div>
+              <div className="eyebrow" style={{ fontSize: 10.5 }}>beklenen sonuç</div>
               <p className="prose-md mt-2">{challenge.expectedOutcome}</p>
             </div>
           </>
@@ -285,7 +285,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
                     </div>
                     {state !== 'open' && (
                       <div className="text-[12px] mt-1" style={{ color: state === 'true' ? 'var(--accent-ink)' : 'oklch(0.46 0.16 25)' }}>
-                        {state === 'true' ? 'Addressed' : 'Not addressed in submission'}
+                        {state === 'true' ? 'Karşılandı' : 'Gönderimde karşılanmadı'}
                       </div>
                     )}
                   </div>
@@ -300,14 +300,14 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
               <details key={i} className="hint">
                 <summary>
                   <span className="twist"><CI.Twist /></span>
-                  <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>HINT {i + 1}</span>
-                  <span>Reveal</span>
+                  <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>İPUCU {i + 1}</span>
+                  <span>Göster</span>
                 </summary>
                 <div className="body">{h}</div>
               </details>
             ))}
             <div className="mt-2 text-[12px]" style={{ color: 'var(--ink-mute)' }}>
-              Using hints lowers your maximum score by 10 points each. Try without first.
+              Her ipucu en yüksek puanını 10 azaltır. Önce ipuçsuz dene.
             </div>
           </div>
         )}
@@ -340,7 +340,7 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
         <div className="flex-1" />
         <div className="flex items-center gap-2 px-2">
           <button className="ide-tab" onClick={() => setCode(challenge.starterCode)}>
-            <CI.Reset /> Reset
+            <CI.Reset /> Sıfırla
           </button>
         </div>
       </div>
@@ -382,25 +382,25 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
            style={{ background: '#fff', borderTop: '1px solid var(--line)' }}>
         <div className="flex items-center gap-3">
           <button className="btn btn-ghost" onClick={onRun} disabled={submitting || running}>
-            {running ? <><CI.Spin className="spin" /> Running…</> : <><CI.Play /> Run tests</>}
+            {running ? <><CI.Spin className="spin" /> Koşuluyor…</> : <><CI.Play /> Testleri çalıştır</>}
           </button>
           {runResult && !running && (
             <span className="font-mono text-[11.5px]"
                   style={{ color: runResult.compiled && runResult.failedTests === 0 && runResult.totalTests > 0
                     ? 'var(--accent-ink)' : 'oklch(0.46 0.16 25)' }}>
               {runResult.evaluated === false
-                ? 'not evaluated'
+                ? 'değerlendirilemedi'
                 : runResult.compiled
-                  ? `${runResult.passedTests}/${runResult.totalTests} tests passed`
-                  : 'compile error'}
+                  ? `${runResult.passedTests}/${runResult.totalTests} test geçti`
+                  : 'derleme hatası'}
             </span>
           )}
           <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>
-            <kbd>Cmd</kbd> + <kbd>Enter</kbd> to submit
+            Göndermek için <kbd>Cmd</kbd> + <kbd>Enter</kbd>
           </span>
         </div>
         <button className="btn btn-primary btn-lg" onClick={onSubmit} disabled={submitting || code === challenge.starterCode}>
-          {submitting ? <><CI.Spin className="spin" /> Submitting…</> : <>Submit for review <CI.Arrow /></>}
+          {submitting ? <><CI.Spin className="spin" /> Gönderiliyor…</> : <>Değerlendirmeye gönder <CI.Arrow /></>}
         </button>
       </div>
     </section>
@@ -414,11 +414,11 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
     return (
       <div style={{ padding: 16 }}>
         <div className="eyebrow" style={{ color: 'var(--ide-mute)', fontSize: 10.5 }}>
-          // xunit test suite — your code is compiled together with this file
+          // xunit test paketi — kodun bu dosyayla birlikte derlenir
         </div>
         {running && (
           <div className="mt-3 font-mono text-[12px]" style={{ color: 'var(--ide-mute)' }}>
-            Compiling and running tests…
+            Derleniyor ve testler koşuluyor…
           </div>
         )}
         {runResult && !running && (
@@ -430,7 +430,7 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
                  background: 'color-mix(in oklch, var(--ide-line) 30%, transparent)',
                  padding: '10px 12px', borderRadius: 8,
                }}>
-            {runResult.output || (runResult.compiled ? `${runResult.passedTests}/${runResult.totalTests} tests passed` : 'Compilation failed.')}
+            {runResult.output || (runResult.compiled ? `${runResult.passedTests}/${runResult.totalTests} test geçti` : 'Derleme başarısız.')}
           </pre>
         )}
         {testCode ? (
@@ -439,8 +439,8 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
           </pre>
         ) : (
           <div className="mt-3 text-[12.5px]" style={{ color: 'var(--ide-mute)' }}>
-            This challenge has no automated test suite — your submission is scored
-            against the evaluation criteria and reviewed.
+            Bu görevin otomatik test paketi yok — gönderimin değerlendirme
+            kriterlerine göre puanlanır ve incelenir.
           </div>
         )}
       </div>
@@ -480,7 +480,7 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
         })}
       </div>
       <div className="mt-4 font-mono text-[10.5px]" style={{ color: 'var(--ide-mute)' }}>
-        Hidden cases will run after you submit.
+        Gizli durumlar gönderimden sonra koşulur.
       </div>
     </div>
   );
