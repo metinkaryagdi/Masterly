@@ -268,7 +268,7 @@ function App() {
     }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'training-platform-export.json';
+    a.href = url; a.download = 'masterly-export.json';
     a.click();
     URL.revokeObjectURL(url);
     flashSaved('data');
@@ -573,7 +573,7 @@ function App() {
             {/* Footer */}
             <footer className="pt-2 pb-8 flex items-center justify-between text-[11px] font-mono"
                     style={{ color: 'var(--ink-mute)' }}>
-              <span>Training Platform · settings</span>
+              <span>Masterly · settings</span>
               <span>local-only · backend has no GET/PATCH /api/users/me yet</span>
             </footer>
           </div>

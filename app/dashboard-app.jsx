@@ -222,7 +222,7 @@ function App() {
         {/* Footer */}
         <footer className="mt-10 pb-12 flex items-center justify-between text-[11px] font-mono"
                 style={{ color: 'var(--ink-mute)' }}>
-          <span>Training Platform · v0.4 beta</span>
+          <span>Masterly · v0.4 beta</span>
           <span>GET /api/study-plans/today · GET /api/analytics/dashboard</span>
         </footer>
       </main>

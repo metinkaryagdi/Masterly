@@ -151,9 +151,9 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
         </button>
         <a href="Dashboard.html" className="hidden md:flex items-center gap-2.5"
            style={{ textDecoration: 'none' }}>
-          <div className="tp-mark">T</div>
+          <div className="tp-mark">M</div>
           <span className="font-semibold tracking-tight text-[14.5px]" style={{ color: 'var(--ink)' }}>
-            Training Platform
+            Masterly
           </span>
         </a>
 

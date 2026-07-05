@@ -35,10 +35,10 @@ function TopNav({ activeTab, apiOnline }) {
         <div className="flex items-center gap-7">
           <a href="Dashboard.html" className="flex items-center gap-2.5"
              style={{ textDecoration: 'none' }}>
-            <div className="tp-mark">T</div>
+            <div className="tp-mark">M</div>
             <div className="font-semibold tracking-tight text-[14.5px]"
                  style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-              Training Platform
+              Masterly
             </div>
           </a>
           <nav className="hidden md:flex items-center gap-1">

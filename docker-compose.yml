@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: training-db
+    container_name: masterly-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: training_platform
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: src/TrainingPlatform.Runner/Dockerfile
-    container_name: training-runner
+    container_name: masterly-runner
     restart: unless-stopped
     # Executes learner-submitted code: keep it resource-capped and without
     # published ports — only the api reaches it over the compose network.
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: src/TrainingPlatform.Api/Dockerfile
-    container_name: training-api
+    container_name: masterly-api
     restart: unless-stopped
     depends_on:
       db:
@@ -65,7 +65,7 @@ services:
 
   web:
     image: nginx:1.27-alpine
-    container_name: training-web
+    container_name: masterly-web
     restart: unless-stopped
     depends_on:
       api:

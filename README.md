@@ -1,4 +1,4 @@
-# Training Platform
+# Masterly
 
 Adaptive training platform for .NET backend skills: daily study plans drawn
 from a per-topic question pool, spaced-repetition style revision, topic-level

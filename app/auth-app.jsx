@@ -114,9 +114,9 @@ function FormPane({ mode, setMode, apiBase, demoMode, layout }) {
         {/* Centered layout: brand mini-header */}
         {isCentered && (
           <div className="flex flex-col items-center mb-7">
-            <div className="tp-mark mb-3" style={{ width: 36, height: 36, fontSize: 17, borderRadius: 10 }}>T</div>
+            <div className="tp-mark mb-3" style={{ width: 36, height: 36, fontSize: 17, borderRadius: 10 }}>M</div>
             <div className="text-[14px] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
-              Training Platform
+              Masterly
             </div>
           </div>
         )}

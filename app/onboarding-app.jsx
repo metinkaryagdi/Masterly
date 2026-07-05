@@ -55,10 +55,10 @@ function Topbar({ step, totalSteps, onSkip }) {
   return (
     <header className="topbar-thin">
       <div className="flex items-center gap-2.5">
-        <div className="tp-mark">T</div>
+        <div className="tp-mark">M</div>
         <div className="font-semibold tracking-tight text-[14.5px]"
              style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-          Training Platform
+          Masterly
         </div>
       </div>
       <div className="flex items-center gap-2.5">
