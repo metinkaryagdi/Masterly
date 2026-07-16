@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using TrainingPlatform.Application.Abstractions.AI;
@@ -23,6 +24,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AdminAccessOptions>(configuration.GetSection(AdminAccessOptions.SectionName));
         services.Configure<OllamaOptions>(configuration.GetSection(OllamaOptions.SectionName));
         services.Configure<RunnerOptions>(configuration.GetSection(RunnerOptions.SectionName));
 
@@ -50,7 +52,16 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(Math.Max(10, runnerOptions.TimeoutSeconds));
         });
 
-        services.AddHttpClient<OllamaApiClient>();
+        services.AddHttpClient<OllamaApiClient>((provider, client) =>
+        {
+            var ollamaOptions = provider.GetRequiredService<IOptions<OllamaOptions>>().Value;
+            if (Uri.TryCreate(ollamaOptions.BaseUrl, UriKind.Absolute, out var baseUri))
+            {
+                client.BaseAddress = baseUri;
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(10, ollamaOptions.TimeoutSeconds));
+        });
         services.AddScoped<IQuestionGenerationService, OllamaQuestionGenerationService>();
         services.AddScoped<IAnswerEvaluationService, OllamaAnswerEvaluationService>();
         services.AddScoped<ICodeFeedbackService, OllamaCodeFeedbackService>();

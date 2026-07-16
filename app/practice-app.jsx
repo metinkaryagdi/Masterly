@@ -138,8 +138,10 @@ function QuestionHeader({ question, item }) {
 
 /* ─────────────── Multiple-choice ─────────────── */
 function MultipleChoice({ question, selected, onSelect, locked, evaluation }) {
-  // After submit, show correctness states
-  const correctId = (question.options.find(o => o.isCorrect) || {}).id;
+  // After submit, the server reveals the correct option id on the evaluation
+  // result — the question payload no longer carries the answer key. Fall back to
+  // any inline flag so offline demo data keeps working.
+  const correctId = evaluation?.correctOptionId ?? (question.options.find(o => o.isCorrect) || {}).id;
   return (
     <div className="flex flex-col gap-2.5">
       {question.options.map((opt, idx) => {

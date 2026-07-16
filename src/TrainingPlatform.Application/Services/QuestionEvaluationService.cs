@@ -7,6 +7,12 @@ namespace TrainingPlatform.Application.Services;
 
 public sealed class QuestionEvaluationService : IQuestionEvaluationService
 {
+    // Substring matching is only meaningful once both sides carry enough signal.
+    // Without this floor a blank answer scores a partial pass, because
+    // "".Contains(x) and x.Contains("") both return true — a one/two-character
+    // fragment would likewise be "contained" in almost any accepted answer.
+    private const int MinPartialMatchLength = 3;
+
     public AnswerEvaluationResult Evaluate(Question question, string? submittedAnswer, Guid? selectedOptionId, int responseTimeSeconds)
     {
         var normalizedAnswer = Normalize(submittedAnswer);
@@ -37,9 +43,17 @@ public sealed class QuestionEvaluationService : IQuestionEvaluationService
 
     private static AnswerEvaluationResult EvaluateShortAnswer(Question question, string normalizedAnswer, double speedScore)
     {
-        var acceptedAnswers = question.AcceptedAnswers.Select(Normalize).ToList();
+        if (string.IsNullOrWhiteSpace(normalizedAnswer))
+        {
+            return new AnswerEvaluationResult(
+                false, 0, normalizedAnswer, "Answer did not match the accepted solution.", speedScore, 0d);
+        }
+
+        var acceptedAnswers = question.AcceptedAnswers.Select(Normalize).Where(answer => answer.Length > 0).ToList();
         var exactMatch = acceptedAnswers.Any(answer => answer == normalizedAnswer);
-        var partialMatch = !exactMatch && acceptedAnswers.Any(answer => normalizedAnswer.Contains(answer) || answer.Contains(normalizedAnswer));
+        var partialMatch = !exactMatch && acceptedAnswers.Any(answer =>
+            Math.Min(answer.Length, normalizedAnswer.Length) >= MinPartialMatchLength &&
+            (normalizedAnswer.Contains(answer) || answer.Contains(normalizedAnswer)));
         var score = exactMatch ? 100 : partialMatch ? 70 : 0;
 
         return new AnswerEvaluationResult(

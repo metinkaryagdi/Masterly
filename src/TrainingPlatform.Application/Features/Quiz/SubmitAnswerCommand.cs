@@ -4,7 +4,9 @@ using TrainingPlatform.Application.Abstractions.Persistence;
 using TrainingPlatform.Application.Abstractions.Time;
 using TrainingPlatform.Application.Common.Cqrs;
 using TrainingPlatform.Application.Common.Exceptions;
+using TrainingPlatform.Application.Common.Persistence;
 using TrainingPlatform.Application.Services;
+using TrainingPlatform.Domain.Common.Enumerations;
 using TrainingPlatform.Domain.Progress;
 
 namespace TrainingPlatform.Application.Features.Quiz;
@@ -25,7 +27,11 @@ public sealed record SubmitAnswerResponse(
     string Explanation,
     int MasteryScore,
     DateTime NextReviewAtUtc,
-    double ForgettingRisk);
+    double ForgettingRisk,
+    // Revealed only after the answer is submitted, so the client can highlight
+    // the right choice without the read model ever leaking it (see Task 2).
+    // Null for non-multiple-choice questions.
+    Guid? CorrectOptionId);
 
 public sealed class SubmitAnswerCommandValidator : AbstractValidator<SubmitAnswerCommand>
 {
@@ -57,28 +63,16 @@ public sealed class SubmitAnswerCommandHandler(
             ?? throw new NotFoundException("The requested question was not found.");
 
         var topic = await dbContext.Topics.SingleAsync(entry => entry.Id == question.TopicId, cancellationToken);
-        var progress = await dbContext.TopicProgressEntries.SingleOrDefaultAsync(
-                           entry => entry.UserId == command.UserId && entry.TopicId == question.TopicId,
-                           cancellationToken)
-                       ?? TopicProgress.Create(command.UserId, question.TopicId, clock.UtcNow);
 
-        var schedule = await dbContext.RevisionSchedules.SingleOrDefaultAsync(
-                           entry => entry.UserId == command.UserId && entry.TopicId == question.TopicId,
-                           cancellationToken)
-                       ?? RevisionSchedule.Create(command.UserId, question.TopicId, clock.UtcNow);
+        // Both rows carry a unique (UserId, TopicId) index. Two concurrent
+        // submissions for a topic's first-ever answer would otherwise both take
+        // the "create" branch and one would fail with a unique violation. Ensure
+        // the rows in isolation, adopting the winner's row on a losing race.
+        var progress = await EnsureProgressAsync(command.UserId, question.TopicId, cancellationToken);
+        var schedule = await EnsureScheduleAsync(command.UserId, question.TopicId, cancellationToken);
 
         var evaluation = questionEvaluationService.Evaluate(question, command.SubmittedAnswer, command.SelectedOptionId, command.ResponseTimeSeconds);
         var revision = revisionEngine.Recalculate(progress, schedule, question.Difficulty, topic.DecayRate, evaluation, clock.UtcNow);
-
-        if (progress.Id == Guid.Empty || !await dbContext.TopicProgressEntries.AnyAsync(entry => entry.Id == progress.Id, cancellationToken))
-        {
-            await dbContext.TopicProgressEntries.AddAsync(progress, cancellationToken);
-        }
-
-        if (schedule.Id == Guid.Empty || !await dbContext.RevisionSchedules.AnyAsync(entry => entry.Id == schedule.Id, cancellationToken))
-        {
-            await dbContext.RevisionSchedules.AddAsync(schedule, cancellationToken);
-        }
 
         progress.ApplyTheoryAttempt(evaluation.WasCorrect, command.ResponseTimeSeconds, revision.MasteryScore, revision.ConsistencyScore, clock.UtcNow);
         schedule.Update(clock.UtcNow, revision.NextReviewAtUtc, revision.ReviewIntervalDays, revision.ForgettingRisk, revision.PriorityScore, evaluation.WasCorrect, revision.ReviewQuality, clock.UtcNow);
@@ -114,6 +108,12 @@ public sealed class SubmitAnswerCommandHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // Safe to disclose now that the answer has been submitted; the read model
+        // (PracticeQuestionDto) withholds it beforehand.
+        var correctOptionId = question.QuestionType == QuestionType.MultipleChoice
+            ? question.Options.FirstOrDefault(option => option.IsCorrect)?.Id
+            : null;
+
         return new SubmitAnswerResponse(
             userAnswer.Id,
             evaluation.WasCorrect,
@@ -122,6 +122,57 @@ public sealed class SubmitAnswerCommandHandler(
             question.Explanation,
             revision.MasteryScore,
             revision.NextReviewAtUtc,
-            revision.ForgettingRisk);
+            revision.ForgettingRisk,
+            correctOptionId);
+    }
+
+    private async Task<TopicProgress> EnsureProgressAsync(Guid userId, Guid topicId, CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.TopicProgressEntries
+            .SingleOrDefaultAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var created = TopicProgress.Create(userId, topicId, clock.UtcNow);
+        await dbContext.TopicProgressEntries.AddAsync(created, cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return created;
+        }
+        catch (DbUpdateException ex) when (PersistenceErrors.IsUniqueViolation(ex))
+        {
+            // A concurrent request inserted it first. Remove on an Added entity
+            // detaches our losing insert; adopt the row the winner committed.
+            dbContext.TopicProgressEntries.Remove(created);
+            return await dbContext.TopicProgressEntries
+                .SingleAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+        }
+    }
+
+    private async Task<RevisionSchedule> EnsureScheduleAsync(Guid userId, Guid topicId, CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.RevisionSchedules
+            .SingleOrDefaultAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var created = RevisionSchedule.Create(userId, topicId, clock.UtcNow);
+        await dbContext.RevisionSchedules.AddAsync(created, cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return created;
+        }
+        catch (DbUpdateException ex) when (PersistenceErrors.IsUniqueViolation(ex))
+        {
+            dbContext.RevisionSchedules.Remove(created);
+            return await dbContext.RevisionSchedules
+                .SingleAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+        }
     }
 }

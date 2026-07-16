@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using TrainingPlatform.Api.Middleware;
+using TrainingPlatform.Api.RateLimiting;
 using TrainingPlatform.Application;
 using TrainingPlatform.Infrastructure;
 using TrainingPlatform.Infrastructure.Seeding;
@@ -21,6 +22,7 @@ builder.Services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddProblemDetails();
+builder.Services.AddApiRateLimiting();
 
 const string DevCorsPolicy = "DevCors";
 builder.Services.AddCors(options =>
@@ -100,6 +102,10 @@ app.UseSwaggerUI(options =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// After authentication so per-user partitioning can read the user's identity.
+app.UseRateLimiter();
+
 app.MapControllers();
 
 await TrainingPlatformSeeder.SeedAsync(app.Services);

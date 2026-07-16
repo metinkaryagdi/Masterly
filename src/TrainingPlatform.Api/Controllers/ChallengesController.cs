@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrainingPlatform.Api.Common;
 using TrainingPlatform.Application.Common.Cqrs;
@@ -33,6 +34,7 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     }
 
     [HttpPost("coding")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType<CodingChallengeDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CodingChallengeDto>> CreateCodingChallenge(CreateCodingChallengeCommand command, CancellationToken cancellationToken)
     {
@@ -41,6 +43,7 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     }
 
     [HttpPost("scenario")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType<ScenarioChallengeDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ScenarioChallengeDto>> CreateScenarioChallenge(CreateScenarioChallengeCommand command, CancellationToken cancellationToken)
     {

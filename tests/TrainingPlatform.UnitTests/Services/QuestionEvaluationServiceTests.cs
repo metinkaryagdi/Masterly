@@ -37,6 +37,23 @@ public sealed class QuestionEvaluationServiceTests
             options: Array.Empty<(string, bool)>(),
             createdAtUtc: CreatedAt);
 
+    // Mirrors the real seeded short-answer questions, whose passing score is 70 —
+    // low enough that a partial match counts as correct. This is the case the
+    // Contains("") bug scored a blank answer as a pass.
+    private static Question LenientShortAnswer()
+        => Question.Create(
+            TopicId,
+            QuestionType.ShortAnswer,
+            prompt: "Async keyword?",
+            explanation: "await",
+            TopicDifficulty.Fundamental,
+            estimatedSolvingTimeSeconds: 45,
+            minimumPassingScore: 70,
+            tags: Array.Empty<string>(),
+            acceptedAnswers: new[] { "await" },
+            options: Array.Empty<(string, bool)>(),
+            createdAtUtc: CreatedAt);
+
     private static Question Scenario()
         => Question.Create(
             TopicId,
@@ -87,6 +104,50 @@ public sealed class QuestionEvaluationServiceTests
 
         Assert.True(result.WasCorrect);
         Assert.Equal(100, result.Score);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void ShortAnswer_rejects_blank_submissions(string? submitted)
+    {
+        var service = new QuestionEvaluationService();
+        var question = LenientShortAnswer();
+
+        var result = service.Evaluate(question, submittedAnswer: submitted, selectedOptionId: null, responseTimeSeconds: 20);
+
+        // Before the fix, "".Contains(accepted)/accepted.Contains("") scored this
+        // as a 70-point partial match — a pass on a 70-threshold question.
+        Assert.False(result.WasCorrect);
+        Assert.Equal(0, result.Score);
+    }
+
+    [Fact]
+    public void ShortAnswer_rejects_a_one_character_fragment()
+    {
+        var service = new QuestionEvaluationService();
+        var question = LenientShortAnswer(); // accepts "await"
+
+        var result = service.Evaluate(question, submittedAnswer: "a", selectedOptionId: null, responseTimeSeconds: 20);
+
+        // "await".Contains("a") is true, but a single character is below the
+        // partial-match floor and must not count.
+        Assert.False(result.WasCorrect);
+        Assert.Equal(0, result.Score);
+    }
+
+    [Fact]
+    public void ShortAnswer_still_accepts_a_meaningful_partial_match()
+    {
+        var service = new QuestionEvaluationService();
+        var question = LenientShortAnswer(); // accepts "await"
+
+        // "awaited" contains "await" (5 chars, above the floor) → partial pass.
+        var result = service.Evaluate(question, submittedAnswer: "awaited", selectedOptionId: null, responseTimeSeconds: 20);
+
+        Assert.True(result.WasCorrect);
+        Assert.Equal(70, result.Score);
     }
 
     [Fact]

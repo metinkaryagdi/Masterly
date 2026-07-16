@@ -6,6 +6,7 @@ using TrainingPlatform.Application.Abstractions.Persistence;
 using TrainingPlatform.Application.Abstractions.Time;
 using TrainingPlatform.Application.Common.Cqrs;
 using TrainingPlatform.Application.Common.Exceptions;
+using TrainingPlatform.Application.Common.Persistence;
 using TrainingPlatform.Application.Services;
 using TrainingPlatform.Domain.Challenges;
 using TrainingPlatform.Domain.Common.Enumerations;
@@ -354,14 +355,7 @@ internal static class ChallengeCommandGuards
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var progress = await dbContext.TopicProgressEntries
-            .SingleOrDefaultAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
-
-        if (progress is null)
-        {
-            progress = TopicProgress.Create(userId, topicId, now);
-            await dbContext.TopicProgressEntries.AddAsync(progress, cancellationToken);
-        }
+        var progress = await EnsureProgressAsync(dbContext, userId, topicId, now, cancellationToken);
 
         if (coding)
         {
@@ -370,6 +364,40 @@ internal static class ChallengeCommandGuards
         else
         {
             progress.ApplyScenarioChallengeResult(succeeded, now);
+        }
+    }
+
+    /// <summary>
+    /// Returns the (UserId, TopicId) progress row, creating it if absent. The
+    /// insert is isolated so a concurrent first attempt that lost the race to the
+    /// unique index is handled by adopting the winner's row instead of failing.
+    /// </summary>
+    private static async Task<TopicProgress> EnsureProgressAsync(
+        ITrainingPlatformDbContext dbContext,
+        Guid userId,
+        Guid topicId,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.TopicProgressEntries
+            .SingleOrDefaultAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var created = TopicProgress.Create(userId, topicId, now);
+        await dbContext.TopicProgressEntries.AddAsync(created, cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return created;
+        }
+        catch (DbUpdateException ex) when (PersistenceErrors.IsUniqueViolation(ex))
+        {
+            dbContext.TopicProgressEntries.Remove(created);
+            return await dbContext.TopicProgressEntries
+                .SingleAsync(entry => entry.UserId == userId && entry.TopicId == topicId, cancellationToken);
         }
     }
 

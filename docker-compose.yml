@@ -23,10 +23,22 @@ services:
       dockerfile: src/TrainingPlatform.Runner/Dockerfile
     container_name: masterly-runner
     restart: unless-stopped
-    # Executes learner-submitted code: keep it resource-capped and without
-    # published ports — only the api reaches it over the compose network.
+    # Executes learner-submitted code: keep it resource-capped, without published
+    # ports, off the internet (internal network), and with a read-only root plus
+    # dropped Linux capabilities. Only /tmp is writable (tmpfs) — the judge builds
+    # and runs each submission under Path.GetTempPath(); the warmed NuGet/MSBuild
+    # cache on the read-only root is still readable for `dotnet test --no-restore`.
     environment:
       ASPNETCORE_URLS: http://+:8080
+    networks:
+      - runner_internal
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     mem_limit: 1536m
     cpus: 1.5
     pids_limit: 512
@@ -58,8 +70,16 @@ services:
       Jwt__Issuer: "TrainingPlatform"
       Jwt__Audience: "TrainingPlatform.Client"
       Jwt__ExpiryMinutes: "120"
+      # Comma-separated is not supported; supply admins by index. These accounts
+      # receive the Admin role claim (question/challenge authoring + AI generation).
+      Authorization__AdminEmails__0: "${ADMIN_EMAIL:-admin@masterly.local}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # On both networks: the default bridge reaches db, web and the host-side
+    # Ollama; runner_internal reaches the sandboxed judge with no internet path.
+    networks:
+      - default
+      - runner_internal
     ports:
       - "${API_PORT:-5000}:5000"
 
@@ -75,6 +95,14 @@ services:
     volumes:
       - ./app:/usr/share/nginx/html:ro
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+networks:
+  # Default bridge with outbound access (db, web, api, host-side Ollama).
+  default:
+  # No gateway to the outside world: the code runner and the api talk here, but
+  # learner-submitted code has no internet egress.
+  runner_internal:
+    internal: true
 
 volumes:
   training_pgdata:

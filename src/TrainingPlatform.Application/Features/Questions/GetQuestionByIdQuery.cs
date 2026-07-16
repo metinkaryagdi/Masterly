@@ -6,7 +6,7 @@ using TrainingPlatform.Application.Common.Exceptions;
 
 namespace TrainingPlatform.Application.Features.Questions;
 
-public sealed record GetQuestionByIdQuery(Guid QuestionId) : IQuery<QuestionDto>;
+public sealed record GetQuestionByIdQuery(Guid QuestionId) : IQuery<PracticeQuestionDto>;
 
 public sealed class GetQuestionByIdQueryValidator : AbstractValidator<GetQuestionByIdQuery>
 {
@@ -16,9 +16,9 @@ public sealed class GetQuestionByIdQueryValidator : AbstractValidator<GetQuestio
     }
 }
 
-public sealed class GetQuestionByIdQueryHandler(ITrainingPlatformDbContext dbContext) : IQueryHandler<GetQuestionByIdQuery, QuestionDto>
+public sealed class GetQuestionByIdQueryHandler(ITrainingPlatformDbContext dbContext) : IQueryHandler<GetQuestionByIdQuery, PracticeQuestionDto>
 {
-    public async Task<QuestionDto> Handle(GetQuestionByIdQuery query, CancellationToken cancellationToken)
+    public async Task<PracticeQuestionDto> Handle(GetQuestionByIdQuery query, CancellationToken cancellationToken)
     {
         var question = await dbContext.Questions
             .AsNoTracking()
@@ -26,17 +26,17 @@ public sealed class GetQuestionByIdQueryHandler(ITrainingPlatformDbContext dbCon
             .SingleOrDefaultAsync(entry => entry.Id == query.QuestionId, cancellationToken)
             ?? throw new NotFoundException("The requested question was not found.");
 
-        return new QuestionDto(
+        // Read path: withhold the answer key (IsCorrect / AcceptedAnswers /
+        // Explanation). The correct answer is only revealed post-submission.
+        return new PracticeQuestionDto(
             question.Id,
             question.TopicId,
             question.QuestionType,
             question.Prompt,
-            question.Explanation,
             question.Difficulty,
             question.EstimatedSolvingTimeSeconds,
             question.MinimumPassingScore,
             question.Tags,
-            question.AcceptedAnswers,
-            question.Options.OrderBy(option => option.Order).Select(option => new QuestionOptionDto(option.Id, option.Text, option.IsCorrect, option.Order)).ToList());
+            question.Options.OrderBy(option => option.Order).Select(option => new PracticeQuestionOptionDto(option.Id, option.Text, option.Order)).ToList());
     }
 }

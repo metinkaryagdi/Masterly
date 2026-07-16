@@ -8,7 +8,7 @@ using TrainingPlatform.Domain.Identity;
 
 namespace TrainingPlatform.Infrastructure.Auth;
 
-public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerator
+public sealed class JwtTokenGenerator(IOptions<JwtOptions> options, IOptions<AdminAccessOptions> adminAccess) : IJwtTokenGenerator
 {
     public string Generate(User user)
     {
@@ -17,13 +17,18 @@ public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenG
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
             SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.DisplayName),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.UniqueName, user.DisplayName),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString())
         };
+
+        if (adminAccess.Value.IsAdmin(user.Email))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+        }
 
         var token = new JwtSecurityToken(
             issuer: jwtOptions.Issuer,

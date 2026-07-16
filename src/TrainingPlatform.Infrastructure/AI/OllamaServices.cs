@@ -26,9 +26,10 @@ internal sealed class OllamaApiClient(HttpClient httpClient, IOptions<OllamaOpti
             throw new InvalidOperationException("Ollama integration is disabled.");
         }
 
-        httpClient.BaseAddress = new Uri(ollamaOptions.BaseUrl);
-        httpClient.Timeout = TimeSpan.FromSeconds(ollamaOptions.TimeoutSeconds);
-
+        // BaseAddress/Timeout are configured once at registration
+        // (AddHttpClient<OllamaApiClient>). Mutating them here threw
+        // InvalidOperationException on the second request of a reused client,
+        // which broke the generation retry loop — never set them per-call.
         var response = await httpClient.PostAsJsonAsync(
             "/api/generate",
             new OllamaGenerateRequest(ollamaOptions.Model, prompt),
