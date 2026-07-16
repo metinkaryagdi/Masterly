@@ -9,13 +9,13 @@ public sealed class ChallengeEvaluationTests
     [Fact]
     public void Code_run_with_all_tests_green_scores_100_and_passes()
     {
-        var run = new CodeExecutionResult(true, 5, 5, 0, "All 5 tests passed.", 200);
+        var run = new CodeExecutionResult(true, 5, 5, 0, "5 testin tamamı geçti.", 200);
 
         var (score, outcome, feedback) = ChallengeEvaluation.ForCodeRun(run);
 
         Assert.Equal(100, score);
         Assert.Equal(ChallengeOutcome.Passed, outcome);
-        Assert.Equal("All 5 tests passed.", feedback);
+        Assert.Equal("5 testin tamamı geçti.", feedback);
     }
 
     [Theory]
@@ -35,13 +35,13 @@ public sealed class ChallengeEvaluationTests
     [Fact]
     public void Compile_failure_scores_zero_and_surfaces_the_compiler_output()
     {
-        var run = new CodeExecutionResult(false, 0, 0, 0, "Compilation failed.\nerror CS1002", 90);
+        var run = new CodeExecutionResult(false, 0, 0, 0, "Derleme başarısız oldu.\nerror CS1002", 90);
 
         var (score, outcome, feedback) = ChallengeEvaluation.ForCodeRun(run);
 
         Assert.Equal(0, score);
         Assert.Equal(ChallengeOutcome.NeedsWork, outcome);
-        Assert.Contains("Compilation failed", feedback);
+        Assert.Contains("Derleme başarısız", feedback);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class ChallengeEvaluationTests
 
         Assert.Equal(100, score);
         Assert.Equal(ChallengeOutcome.Passed, outcome);
-        Assert.Contains("All 3", feedback);
+        Assert.Contains("3 değerlendirme kriterinin tamamı", feedback);
     }
 
     [Fact]

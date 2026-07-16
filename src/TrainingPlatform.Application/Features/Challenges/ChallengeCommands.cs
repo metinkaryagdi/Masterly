@@ -221,7 +221,7 @@ public sealed class SubmitCodingSubmissionCommandHandler(
                 cancellationToken);
             if (!string.IsNullOrWhiteSpace(ai.Content))
             {
-                submission.AppendFeedback($"AI feedback:\n{ai.Content.Trim()}", now);
+                submission.AppendFeedback($"AI geri bildirimi:\n{ai.Content.Trim()}", now);
             }
         }
         catch (OperationCanceledException)
@@ -284,7 +284,7 @@ public sealed class SubmitScenarioSubmissionCommandHandler(
                 cancellationToken);
             if (!string.IsNullOrWhiteSpace(ai.Content))
             {
-                submission.AppendFeedback($"AI feedback:\n{ai.Content.Trim()}", now);
+                submission.AppendFeedback($"AI geri bildirimi:\n{ai.Content.Trim()}", now);
             }
         }
         catch (OperationCanceledException)
@@ -319,13 +319,13 @@ public sealed class RunCodingChallengeCommandHandler(
         if (!challenge.HasAutomatedTests)
         {
             return new CodeRunDto(false, false, 0, 0, 0,
-                "This challenge has no automated tests — submit for review instead.");
+                "Bu görevin otomatik testi yok — bunun yerine değerlendirmeye gönder.");
         }
 
         if (!codeExecution.IsEnabled)
         {
             return new CodeRunDto(false, false, 0, 0, 0,
-                "The test runner is not available in this environment.");
+                "Test çalıştırıcısı bu ortamda kullanılamıyor.");
         }
 
         var run = await codeExecution.RunAsync(command.SubmittedCode, challenge.TestCode, cancellationToken);

@@ -44,9 +44,9 @@ function categoryLabel(c) {
 }
 function difficultyLabel(d) {
   // The API serializes enums as strings ("Intermediate"); mocks use numbers.
-  if (typeof d === 'string' && d) return d;
+  // Always map to Turkish — fall back to the raw value only when unknown.
   const en = { Fundamental: 'Temel', Intermediate: 'Orta', Advanced: 'İleri', Expert: 'Uzman' };
-  if (typeof d === 'string' && en[d]) return en[d];
+  if (typeof d === 'string' && d) return en[d] || d;
   const map = { 1: 'Temel', 2: 'Orta', 3: 'İleri', 4: 'Uzman' };
   return map[d] || '—';
 }

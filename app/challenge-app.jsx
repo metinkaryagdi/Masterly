@@ -173,7 +173,7 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
         <div className="flex items-center gap-3">
           {challenge && (
             <span className="font-mono text-[11.5px]" style={{ color: 'var(--ink-mute)' }}>
-              ~{challenge.estimatedMinutes}m · {difficultyLabel(challenge.difficulty)}
+              ~{challenge.estimatedMinutes} dk · {difficultyLabel(challenge.difficulty)}
             </span>
           )}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white"
@@ -189,9 +189,9 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
               outcome.outcome === ChallengeOutcome.NeedsWork ? 'ribbon ribbon-needs' :
               'ribbon ribbon-pending'
             }>
-              {outcome.outcome === ChallengeOutcome.Passed   ? <><CI.Check /> passed</> :
-               outcome.outcome === ChallengeOutcome.NeedsWork ? <>needs work</> :
-               <>pending review</>}
+              {outcome.outcome === ChallengeOutcome.Passed   ? <><CI.Check /> geçti</> :
+               outcome.outcome === ChallengeOutcome.NeedsWork ? <>geliştir</> :
+               <>inceleniyor</>}
               <span style={{ opacity: 0.6, marginLeft: 4 }}>{outcome.score}/100</span>
             </span>
           )}
@@ -228,7 +228,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
     <section className="card" style={{ minHeight: 'calc(100vh - 100px)' }}>
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-center justify-between">
-          <div className="eyebrow">// problem</div>
+          <div className="eyebrow">// görev</div>
           <span className="font-mono text-[10.5px]" style={{ color: 'var(--ink-mute)' }}>
             {challenge.evaluationCriteria.length} kriter
           </span>
@@ -245,7 +245,7 @@ function CodingProblemPanel({ challenge, mode, setMode, criteriaResults }) {
             </span>
             <span style={{ color: 'var(--ink-mute)', marginLeft: 4 }}>{difficultyLabel(challenge.difficulty)}</span>
           </span>
-          <span className="topic-chip">~{challenge.estimatedMinutes} min</span>
+          <span className="topic-chip">~{challenge.estimatedMinutes} dk</span>
         </div>
       </div>
 
@@ -373,7 +373,7 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
           <span className="sep">·</span>
           <span>UTF-8</span>
           <span className="sep">·</span>
-          <span>{code.split('\n').length} lines</span>
+          <span>{code.split('\n').length} satır</span>
         </div>
       </div>
 
@@ -450,7 +450,7 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
   return (
     <div style={{ padding: 16 }}>
       <div className="eyebrow" style={{ color: 'var(--ide-mute)', fontSize: 10.5 }}>
-        // public test suite ({tests.length} cases)
+        // açık test paketi ({tests.length} senaryo)
       </div>
       <div className="mt-3 flex flex-col">
         {tests.map((t, i) => {
@@ -480,7 +480,7 @@ function TestsView({ tests, runState, testCode, runResult, running }) {
         })}
       </div>
       <div className="mt-4 font-mono text-[10.5px]" style={{ color: 'var(--ide-mute)' }}>
-        Gizli durumlar gönderimden sonra koşulur.
+        Gizli test durumları gönderimden sonra çalıştırılır.
       </div>
     </div>
   );
@@ -492,7 +492,7 @@ function NotesView({ value, onChange }) {
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="// jot down your approach, edge cases, things you'd refactor with more time…"
+        placeholder="// yaklaşımını, sınır durumları, zamanın olsa yeniden düzenleyeceğin yerleri not al…"
         rows={20}
         style={{
           width: '100%',
@@ -515,7 +515,7 @@ function ScenarioPanel({ challenge, criteriaResults }) {
   return (
     <section className="card" style={{ minHeight: 'calc(100vh - 100px)' }}>
       <div className="px-5 pt-5 pb-4">
-        <div className="eyebrow">// scenario</div>
+        <div className="eyebrow">// senaryo</div>
         <h1 className="mt-2 font-semibold tracking-tight"
             style={{ fontSize: 22, letterSpacing: '-0.022em', color: 'var(--ink)', lineHeight: 1.25 }}>
           {challenge.title}
@@ -528,7 +528,7 @@ function ScenarioPanel({ challenge, criteriaResults }) {
             </span>
             <span style={{ color: 'var(--ink-mute)', marginLeft: 4 }}>{difficultyLabel(challenge.difficulty)}</span>
           </span>
-          <span className="topic-chip">~{challenge.estimatedMinutes} min</span>
+          <span className="topic-chip">~{challenge.estimatedMinutes} dk</span>
         </div>
       </div>
 
@@ -538,7 +538,7 @@ function ScenarioPanel({ challenge, criteriaResults }) {
 
       <div className="px-5 pb-5">
         <div className="eyebrow flex items-center gap-2" style={{ marginBottom: 10 }}>
-          // evaluation criteria
+          // değerlendirme kriterleri
         </div>
         <div>
           {challenge.evaluationCriteria.map((c, i) => {
@@ -558,12 +558,13 @@ function ScenarioPanel({ challenge, criteriaResults }) {
         </div>
       </div>
 
+      {(challenge.hints || []).length > 0 && (
       <div className="px-5 pb-5">
         <details className="hint">
           <summary>
             <span className="twist"><CI.Twist /></span>
-            <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>HINTS</span>
-            <span>Show 3 hints (lowers max score)</span>
+            <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>İPUÇLARI</span>
+            <span>{challenge.hints.length} ipucunu göster (en yüksek puanı düşürür)</span>
           </summary>
           <div className="body">
             {(challenge.hints || []).map((h, i) => (
@@ -575,6 +576,7 @@ function ScenarioPanel({ challenge, criteriaResults }) {
           </div>
         </details>
       </div>
+      )}
     </section>
   );
 }
@@ -588,13 +590,13 @@ function ScenarioEditor({ challenge, text, setText, onSubmit, submitting }) {
     <section className="card" style={{ minHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div>
-          <div className="eyebrow">// your response</div>
+          <div className="eyebrow">// yanıtın</div>
           <div className="mt-1 text-[13px]" style={{ color: 'var(--ink-soft)' }}>
-            Walk through your reasoning. Show the trade-offs.
+            Muhakemeni adım adım anlat. Ödünleşimleri (trade-off) göster.
           </div>
         </div>
         <div className="font-mono text-[11.5px] tabular-nums" style={{ color: 'var(--ink-mute)' }}>
-          {words} words {words < minWords && <span style={{ color: 'var(--warn)' }}>· needs ≥ {minWords}</span>}
+          {words} kelime {words < minWords && <span style={{ color: 'var(--warn)' }}>· en az {minWords} gerekli</span>}
         </div>
       </div>
 
@@ -604,17 +606,17 @@ function ScenarioEditor({ challenge, text, setText, onSubmit, submitting }) {
           style={{ minHeight: 'calc(100vh - 280px)' }}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Start with your overall approach in 1–2 sentences, then go through each criterion. Don't worry about polish — clarity over prose."
+          placeholder="Önce genel yaklaşımını 1–2 cümleyle özetle, sonra her kriteri tek tek ele al. Cilaya takılma — akıcı yazıdan çok netlik önemli."
         />
       </div>
 
       <div className="px-5 py-3 flex items-center justify-between"
            style={{ borderTop: '1px solid var(--line)' }}>
         <span className="font-mono text-[11px]" style={{ color: 'var(--ink-mute)' }}>
-          <kbd>Cmd</kbd> + <kbd>Enter</kbd> to submit
+          Göndermek için <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
         </span>
         <button className="btn btn-primary btn-lg" onClick={onSubmit} disabled={submitting || !canSubmit}>
-          {submitting ? <><CI.Spin className="spin" /> Submitting…</> : <>Submit response <CI.Arrow /></>}
+          {submitting ? <><CI.Spin className="spin" /> Gönderiliyor…</> : <>Yanıtı gönder <CI.Arrow /></>}
         </button>
       </div>
     </section>
@@ -649,17 +651,17 @@ function EvaluationPanel({ kind, challenge, result, onClose, onNext }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="font-semibold tracking-tight" style={{ fontSize: 18, letterSpacing: '-0.02em' }}>
-                    {result.outcome === ChallengeOutcome.Passed ? 'Passed.' :
-                     result.outcome === ChallengeOutcome.NeedsWork ? 'Needs work.' :
-                     'Pending human review.'}
+                    {result.outcome === ChallengeOutcome.Passed ? 'Geçti.' :
+                     result.outcome === ChallengeOutcome.NeedsWork ? 'Geliştirmeli.' :
+                     'İnceleme bekliyor.'}
                   </div>
                   <div className="font-mono tabular-nums" style={{ fontSize: 13 }}>
-                    score <b style={{ fontWeight: 600 }}>{result.score}</b> / 100
+                    puan <b style={{ fontWeight: 600 }}>{result.score}</b> / 100
                   </div>
                 </div>
                 {Number.isFinite(result.testsTotal) && result.testsTotal > 0 && (
                   <div className="mt-1 font-mono text-[12px] tabular-nums">
-                    {result.testsPassed}/{result.testsTotal} tests passed
+                    {result.testsPassed}/{result.testsTotal} test geçti
                   </div>
                 )}
                 <p className="mt-1 text-[13.5px]" style={{ lineHeight: 1.55, textWrap: 'pretty', whiteSpace: 'pre-wrap' }}>
@@ -670,17 +672,17 @@ function EvaluationPanel({ kind, challenge, result, onClose, onNext }) {
 
             <div className="mt-3 flex items-center gap-2">
               <button className="btn btn-ghost" onClick={onClose}>
-                <CI.Back /> Keep editing
+                <CI.Back /> Düzenlemeye devam et
               </button>
               <button className="btn btn-primary btn-lg flex-1" onClick={onNext}>
-                Back to today's plan <CI.Arrow />
+                Bugünün planına dön <CI.Arrow />
               </button>
             </div>
           </div>
 
           {/* Right: criteria results */}
           <div>
-            <div className="eyebrow flex items-center gap-2"><CI.Spark /> criteria breakdown</div>
+            <div className="eyebrow flex items-center gap-2"><CI.Spark /> kriter dökümü</div>
             <div className="mt-2 card" style={{ padding: '6px 16px 4px' }}>
               {result._criteriaResults?.map((c, i) => (
                 <div key={i} className="crit-row" style={{ borderBottomStyle: 'solid' }}>
@@ -693,7 +695,7 @@ function EvaluationPanel({ kind, challenge, result, onClose, onNext }) {
                     </div>
                     <div className="text-[12px] mt-0.5"
                          style={{ color: c.met ? 'var(--accent-ink)' : 'oklch(0.46 0.16 25)' }}>
-                      {c.met ? 'Addressed' : 'Missing or only partially addressed'}
+                      {c.met ? 'Karşılandı' : 'Eksik ya da yalnızca kısmen karşılandı'}
                     </div>
                   </div>
                 </div>
@@ -713,6 +715,10 @@ function App() {
   const kind = cM(() => new URLSearchParams(location.search).get('kind') || 'coding', []);
   const id   = cM(() => new URLSearchParams(location.search).get('id'),   []);
   const planId = cM(() => new URLSearchParams(location.search).get('plan'), []);
+  // Gerçek challenge id'leri GUID; tweaks kısayolları gibi mock id'lerle gelen
+  // linkler ?demo=1 ile demo verisine bağlanır.
+  const urlDemo = cM(() => new URLSearchParams(location.search).get('demo') === '1', []);
+  const demoMode = t.demoMode || urlDemo;
 
   const [challenge, setChallenge] = cS(null);
   const [loading, setLoading] = cS(true);
@@ -750,20 +756,20 @@ function App() {
   // Load challenge
   cE(() => {
     if (!id) {
-      setErrMsg('No challenge id in URL — open one from your plan or topic page.');
+      setErrMsg('URL’de görev kimliği yok — planından veya konu sayfandan bir görev aç.');
       setLoading(false);
       return;
     }
     setLoading(true);
-    fetchChallenge({ apiBase: t.apiBase, demoMode: t.demoMode }, kind, id)
+    fetchChallenge({ apiBase: t.apiBase, demoMode }, kind, id)
       .then((c) => {
         setChallenge(c);
         if (kind === 'coding') setCode(c.starterCode || '');
         startRef.current = Date.now();
         setLoading(false);
       })
-      .catch((err) => { setErrMsg(err.message || 'Failed to load'); setLoading(false); });
-  }, [kind, id, t.apiBase, t.demoMode]);
+      .catch((err) => { setErrMsg(err.message || 'Yükleme başarısız oldu.'); setLoading(false); });
+  }, [kind, id, t.apiBase, demoMode]);
 
   // Timer
   cE(() => {
@@ -788,7 +794,7 @@ function App() {
     if (!challenge || kind !== 'coding' || running) return;
     setFileTab('tests');
 
-    if (t.demoMode && (challenge.tests || []).length > 0) {
+    if (demoMode && (challenge.tests || []).length > 0) {
       // Demo mode: fake a test run with sequential reveal over the mock list.
       const tests = challenge.tests || [];
       setRunState(tests.map(() => 'pending'));
@@ -806,7 +812,7 @@ function App() {
     setRunning(true);
     setRunResult(null);
     try {
-      const res = await runCodingTests({ apiBase: t.apiBase, demoMode: t.demoMode }, challenge.id, code);
+      const res = await runCodingTests({ apiBase: t.apiBase, demoMode }, challenge.id, code);
       setRunResult(res);
     } catch (err) {
       setRunResult({ evaluated: false, compiled: false, output: err.message || 'Test run failed.' });
@@ -822,12 +828,12 @@ function App() {
       const body = kind === 'coding'
         ? { codingChallengeId: challenge.id, dailyStudyPlanId: planId || null, submittedCode: code, notes }
         : { scenarioChallengeId: challenge.id, dailyStudyPlanId: planId || null, responseText: scenarioText };
-      const res = await submitChallenge({ apiBase: t.apiBase, demoMode: t.demoMode }, kind, body);
+      const res = await submitChallenge({ apiBase: t.apiBase, demoMode }, kind, body);
       setResult(res);
       // Reveal criteria tab on coding so user sees the breakdown alongside the panel
       if (kind === 'coding') setProblemMode('criteria');
     } catch (err) {
-      setErrMsg(err.message || 'Submission failed');
+      setErrMsg(err.message || 'Gönderim başarısız oldu.');
     } finally {
       setSubmitting(false);
     }
@@ -856,10 +862,10 @@ function App() {
         <main className="container-x py-12">
           <div className="card p-10 text-center max-w-[480px] mx-auto">
             <h2 className="font-semibold tracking-tight" style={{ fontSize: 22, letterSpacing: '-0.022em' }}>
-              Couldn't load the challenge.
+              Görev yüklenemedi.
             </h2>
             <p className="mt-2 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>{errMsg}</p>
-            <button className="btn btn-primary mt-5" onClick={handleExit}>Back to plan</button>
+            <button className="btn btn-primary mt-5" onClick={handleExit}>Panele dön</button>
           </div>
         </main>
       </>
@@ -934,10 +940,10 @@ function App() {
                    onChange={(v) => setTweak('apiBase', v)}
                    placeholder="http://localhost:5000" />
 
-        <TweakSection label="Jump to challenge" />
-        <TweakButton label="c-1 · Refresh-token rotation" onClick={() => location.href = 'Challenge.html?kind=coding&id=c-1'} />
-        <TweakButton label="c-2 · Idempotent pipeline" onClick={() => location.href = 'Challenge.html?kind=coding&id=c-2'} />
-        <TweakButton label="s-1 · Indexing without downtime" onClick={() => location.href = 'Challenge.html?kind=scenario&id=s-1'} />
+        <TweakSection label="Jump to challenge (demo data)" />
+        <TweakButton label="c-1 · Refresh-token rotation" onClick={() => location.href = 'Challenge.html?kind=coding&id=c-1&demo=1'} />
+        <TweakButton label="c-2 · Idempotent pipeline" onClick={() => location.href = 'Challenge.html?kind=coding&id=c-2&demo=1'} />
+        <TweakButton label="s-1 · Indexing without downtime" onClick={() => location.href = 'Challenge.html?kind=scenario&id=s-1&demo=1'} />
       </TweaksPanel>
     </>
   );

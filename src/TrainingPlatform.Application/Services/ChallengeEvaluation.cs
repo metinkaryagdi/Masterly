@@ -22,7 +22,7 @@ public static class ChallengeEvaluation
 
         if (run.TotalTests == 0)
         {
-            return (0, ChallengeOutcome.NeedsWork, "The test suite produced no results.");
+            return (0, ChallengeOutcome.NeedsWork, "Test paketi sonuç üretmedi.");
         }
 
         var score = (int)Math.Round(100d * run.PassedTests / run.TotalTests, MidpointRounding.AwayFromZero);
@@ -40,7 +40,7 @@ public static class ChallengeEvaluation
         var criteria = evaluationCriteria.Where(criterion => !string.IsNullOrWhiteSpace(criterion)).ToList();
         if (criteria.Count == 0)
         {
-            return (0, ChallengeOutcome.PendingReview, "This challenge has no evaluation criteria; awaiting review.");
+            return (0, ChallengeOutcome.PendingReview, "Bu görevin değerlendirme kriteri yok; incelemeye alındı.");
         }
 
         var normalizedResponse = Normalize(responseText);
@@ -51,8 +51,8 @@ public static class ChallengeEvaluation
         var outcome = score >= ScenarioPassingScore ? ChallengeOutcome.Passed : ChallengeOutcome.NeedsWork;
 
         var feedback = missing.Count == 0
-            ? $"All {criteria.Count} evaluation criteria addressed."
-            : $"Addressed {addressed.Count} of {criteria.Count} evaluation criteria. Not covered yet: {string.Join(", ", missing)}.";
+            ? $"{criteria.Count} değerlendirme kriterinin tamamı karşılandı."
+            : $"{criteria.Count} kriterden {addressed.Count} tanesi karşılandı. Henüz değinilmeyenler: {string.Join(", ", missing)}.";
 
         return (score, outcome, feedback);
     }

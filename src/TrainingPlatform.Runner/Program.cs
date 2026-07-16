@@ -91,7 +91,7 @@ public static class JudgeRun
             }
 
             var (total, passed, failed, failureDetails) = ParseTrx(trxPath);
-            var output = failed > 0 ? failureDetails : $"All {total} tests passed.";
+            var output = failed > 0 ? failureDetails : $"{total} testin tamamı geçti.";
             return new RunResponse(true, total, passed, failed, Truncate(output, 4000), stopwatch.ElapsedMilliseconds);
         }
         finally
@@ -159,12 +159,12 @@ public static class JudgeRun
             .Where(result => (string?)result.Attribute("outcome") == "Failed")
             .Select(result =>
             {
-                var name = (string?)result.Attribute("testName") ?? "unknown test";
+                var name = (string?)result.Attribute("testName") ?? "bilinmeyen test";
                 var message = result.Descendants(TrxNs + "Message").FirstOrDefault()?.Value.Trim() ?? string.Empty;
-                return $"FAILED {name}\n  {message.Replace("\n", "\n  ")}";
+                return $"BAŞARISIZ {name}\n  {message.Replace("\n", "\n  ")}";
             });
 
-        var details = $"{passed} of {total} tests passed.\n\n{string.Join("\n\n", failures)}";
+        var details = $"{total} testten {passed} tanesi geçti.\n\n{string.Join("\n\n", failures)}";
         return (total, passed, failed, details);
     }
 
@@ -183,7 +183,7 @@ public static class JudgeRun
             ? string.Join("\n", errorLines)
             : Truncate(consoleOutput, 2000);
 
-        return $"Compilation failed.\n{body}";
+        return $"Derleme başarısız oldu.\n{body}";
     }
 
     private static void CopyDirectory(string source, string destination)

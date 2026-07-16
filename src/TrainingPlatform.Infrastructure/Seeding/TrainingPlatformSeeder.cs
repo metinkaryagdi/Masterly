@@ -45,14 +45,14 @@ public static class TrainingPlatformSeeder
 
     private static async Task SeedTopicsAsync(TrainingPlatformDbContext dbContext, DateTime now, CancellationToken cancellationToken)
     {
-        var csharp = Topic.Create("C# Foundations", "csharp-foundations", "Language fundamentals, LINQ, and async patterns.", TopicDifficulty.Fundamental, 1.2d, [], now);
-        var aspNet = Topic.Create("ASP.NET Core API Design", "aspnet-core-api-design", "Controllers, contracts, auth, and HTTP concerns.", TopicDifficulty.Intermediate, 1.15d, [csharp.Id], now);
-        var efCore = Topic.Create("EF Core", "ef-core", "Persistence, mappings, and query behavior.", TopicDifficulty.Intermediate, 1.2d, [csharp.Id], now);
-        var cleanArchitecture = Topic.Create("Clean Architecture", "clean-architecture", "Boundaries, use cases, and dependency rules.", TopicDifficulty.Advanced, 1.05d, [aspNet.Id, efCore.Id], now);
-        var cqrs = Topic.Create("CQRS", "cqrs", "Commands, queries, and behavioral separation.", TopicDifficulty.Advanced, 1.1d, [cleanArchitecture.Id], now);
-        var jwt = Topic.Create("JWT Authentication", "jwt-authentication", "Token issuance, validation, and claims design.", TopicDifficulty.Intermediate, 1.1d, [aspNet.Id], now);
-        var caching = Topic.Create("Caching Strategy", "caching-strategy", "Read optimization, invalidation, and trade-offs.", TopicDifficulty.Advanced, 1.0d, [aspNet.Id, efCore.Id], now);
-        var postgres = Topic.Create("PostgreSQL", "postgresql", "Indexes, transactions, and relational modeling.", TopicDifficulty.Intermediate, 1.15d, [efCore.Id], now);
+        var csharp = Topic.Create("C# Temelleri", "csharp-foundations", "Dil temelleri, LINQ ve asenkron desenler.", TopicDifficulty.Fundamental, 1.2d, [], now);
+        var aspNet = Topic.Create("ASP.NET Core API Tasarımı", "aspnet-core-api-design", "Controller'lar, sözleşmeler, kimlik doğrulama ve HTTP konuları.", TopicDifficulty.Intermediate, 1.15d, [csharp.Id], now);
+        var efCore = Topic.Create("EF Core", "ef-core", "Kalıcılık, eşlemeler ve sorgu davranışı.", TopicDifficulty.Intermediate, 1.2d, [csharp.Id], now);
+        var cleanArchitecture = Topic.Create("Temiz Mimari", "clean-architecture", "Sınırlar, kullanım senaryoları ve bağımlılık kuralları.", TopicDifficulty.Advanced, 1.05d, [aspNet.Id, efCore.Id], now);
+        var cqrs = Topic.Create("CQRS", "cqrs", "Komutlar, sorgular ve davranışsal ayrım.", TopicDifficulty.Advanced, 1.1d, [cleanArchitecture.Id], now);
+        var jwt = Topic.Create("JWT Kimlik Doğrulama", "jwt-authentication", "Token üretimi, doğrulama ve claim tasarımı.", TopicDifficulty.Intermediate, 1.1d, [aspNet.Id], now);
+        var caching = Topic.Create("Önbellekleme Stratejisi", "caching-strategy", "Okuma optimizasyonu, geçersiz kılma ve ödünleşimler.", TopicDifficulty.Advanced, 1.0d, [aspNet.Id, efCore.Id], now);
+        var postgres = Topic.Create("PostgreSQL", "postgresql", "İndeksler, transaction'lar ve ilişkisel modelleme.", TopicDifficulty.Intermediate, 1.15d, [efCore.Id], now);
 
         await dbContext.Topics.AddRangeAsync([csharp, aspNet, efCore, cleanArchitecture, cqrs, jwt, caching, postgres], cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -185,39 +185,39 @@ public static class TrainingPlatformSeeder
     {
         yield return new CodingChallengeSpec(
             "cqrs",
-            "Add a Query Handler for Topic Mastery",
-            "Design a CQRS query that returns topic mastery metrics without leaking EF entities into the API layer.",
+            "Konu Ustalığı için Query Handler Ekle",
+            "EF varlıklarını API katmanına sızdırmadan konu ustalık metriklerini döndüren bir CQRS sorgusu tasarla.",
             TopicDifficulty.Advanced, 60,
-            ["Use an application DTO", "Keep infrastructure concerns out of the API", "Support filtering by topic"],
+            ["Uygulama katmanı DTO'su kullan", "Altyapı kaygılarını API dışında tut", "Konuya göre filtrelemeyi destekle"],
             "public sealed record GetTopicMasteryQuery(Guid UserId);",
-            "A query handler and response DTO that returns mastery details cleanly.",
+            "Ustalık ayrıntılarını temiz biçimde döndüren bir query handler ve yanıt DTO'su.",
             TestCode: "");
 
         yield return new CodingChallengeSpec(
             "aspnet-core-api-design",
-            "Secure a Training Endpoint with JWT",
-            "Add JWT protection and extract the current user identifier from claims for an endpoint.",
+            "Bir Eğitim Endpoint'ini JWT ile Güvenceye Al",
+            "Bir endpoint'e JWT koruması ekle ve mevcut kullanıcı kimliğini claim'lerden çıkar.",
             TopicDifficulty.Intermediate, 45,
-            ["Use Authorize", "Validate claims access", "Avoid trusting request body user ids"],
+            ["Authorize kullan", "Claim erişimini doğrula", "İstek gövdesindeki kullanıcı kimliğine güvenme"],
             "[Authorize]\npublic sealed class StudyPlansController : ControllerBase { }",
-            "A protected endpoint that reads the user id from the authenticated principal.",
+            "Kullanıcı kimliğini kimliği doğrulanmış principal'dan okuyan korumalı bir endpoint.",
             TestCode: "");
 
         yield return new CodingChallengeSpec(
             "csharp-foundations",
-            "Implement a sliding window rate limiter",
+            "Kayan pencere (sliding window) hız sınırlayıcı yaz",
             """
-            Build a rate limiter that allows at most `limit` calls inside a sliding
-            time window. A call at time T is allowed when fewer than `limit` calls
-            were ALLOWED in the interval (T - window, T]. Rejected calls do not
-            consume capacity.
+            En fazla `limit` çağrıya kayan bir zaman penceresi içinde izin veren bir
+            hız sınırlayıcı (rate limiter) yaz. T anındaki bir çağrıya, (T - window, T]
+            aralığında `limit`ten AZ çağrıya İZİN VERİLMİŞSE izin verilir. Reddedilen
+            çağrılar kapasite tüketmez.
 
-            Keep the class in the global namespace (no namespace declaration) so
-            the test suite can find it. The clock is passed in — do not use
-            DateTime.UtcNow inside the class.
+            Test paketinin sınıfı bulabilmesi için sınıfı global namespace'te tut
+            (namespace bildirimi olmadan). Saat dışarıdan verilir — sınıfın içinde
+            DateTime.UtcNow kullanma.
             """,
             TopicDifficulty.Intermediate, 30,
-            ["Sliding window semantics (not fixed buckets)", "Rejected calls consume no capacity", "No wall-clock access inside the class"],
+            ["Kayan pencere semantiği (sabit kova değil)", "Reddedilen çağrılar kapasite tüketmez", "Sınıf içinde duvar saatine erişim yok"],
             """
             public class SlidingWindowRateLimiter
             {
@@ -226,8 +226,8 @@ public static class TrainingPlatformSeeder
                     // TODO
                 }
 
-                // Returns true when the call at 'nowUtc' is allowed, false when the
-                // window already holds 'limit' allowed calls.
+                // 'nowUtc' anındaki çağrıya izin veriliyorsa true, pencere zaten
+                // 'limit' kadar izinli çağrı içeriyorsa false döner.
                 public bool TryAcquire(DateTime nowUtc)
                 {
                     // TODO
@@ -235,7 +235,7 @@ public static class TrainingPlatformSeeder
                 }
             }
             """,
-            "All rate-limiter tests green: capacity respected, window slides, rejections don't consume capacity.",
+            "Tüm rate-limiter testleri yeşil: kapasiteye uyuluyor, pencere kayıyor, reddedilenler kapasite tüketmiyor.",
             """
             using Xunit;
 
@@ -285,16 +285,17 @@ public static class TrainingPlatformSeeder
 
         yield return new CodingChallengeSpec(
             "caching-strategy",
-            "Implement an in-memory LRU cache",
+            "Bellek içi LRU önbellek yaz",
             """
-            Build a least-recently-used cache with a fixed capacity. When the cache
-            is full, inserting a new key evicts the entry that has gone unused the
-            longest. Both reads (TryGet) and writes (Set) refresh an entry's recency.
+            Sabit kapasiteli bir en-az-son-kullanılan (LRU) önbellek yaz. Önbellek
+            doluyken yeni bir anahtar eklemek, en uzun süredir kullanılmayan girdiyi
+            tahliye eder. Hem okuma (TryGet) hem de yazma (Set) bir girdinin
+            tazeliğini yeniler.
 
-            Keep the class in the global namespace so the test suite can find it.
+            Test paketinin sınıfı bulabilmesi için sınıfı global namespace'te tut.
             """,
             TopicDifficulty.Advanced, 40,
-            ["O(1) get/set is the goal", "Reads refresh recency", "Updating an existing key must not grow the cache"],
+            ["Hedef O(1) get/set", "Okumalar tazeliği yeniler", "Var olan anahtarı güncellemek önbelleği büyütmemeli"],
             """
             public class LruCache<TKey, TValue> where TKey : notnull
             {
@@ -318,7 +319,7 @@ public static class TrainingPlatformSeeder
                 }
             }
             """,
-            "All LRU tests green: capacity eviction, recency refresh on read, in-place updates.",
+            "Tüm LRU testleri yeşil: kapasite tahliyesi, okumada tazelik yenileme, yerinde güncelleme.",
             """
             using Xunit;
 
@@ -373,17 +374,17 @@ public static class TrainingPlatformSeeder
 
         yield return new CodingChallengeSpec(
             "aspnet-core-api-design",
-            "Implement pagination metadata for a list endpoint",
+            "Bir liste endpoint'i için sayfalama meta verisi yaz",
             """
-            Slice a source list into a single page and report the paging metadata a
-            list endpoint would return. Clamp the requested page into the valid
-            range: below 1 becomes 1; past the last page becomes the last page.
-            An empty source yields an empty first page with zero totals.
+            Bir kaynak listesini tek bir sayfaya böl ve bir liste endpoint'inin
+            döndüreceği sayfalama meta verisini raporla. İstenen sayfayı geçerli
+            aralığa sıkıştır: 1'in altı 1 olur; son sayfanın ötesi son sayfa olur.
+            Boş bir kaynak, sıfır toplamlı boş bir ilk sayfa döndürür.
 
-            Keep both types in the global namespace so the test suite can find them.
+            Test paketinin bulabilmesi için her iki tipi de global namespace'te tut.
             """,
             TopicDifficulty.Intermediate, 25,
-            ["Correct slice for the requested page", "Page number clamped to the valid range", "Accurate TotalCount/TotalPages metadata"],
+            ["İstenen sayfa için doğru dilim", "Sayfa numarası geçerli aralığa sıkıştırılmış", "Doğru TotalCount/TotalPages meta verisi"],
             """
             public sealed record PagedResult<T>(
                 IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount, int TotalPages);
@@ -397,7 +398,7 @@ public static class TrainingPlatformSeeder
                 }
             }
             """,
-            "All pagination tests green: slicing, clamping, and metadata.",
+            "Tüm sayfalama testleri yeşil: dilimleme, sıkıştırma ve meta veri.",
             """
             using Xunit;
 
@@ -455,19 +456,19 @@ public static class TrainingPlatformSeeder
     {
         yield return new ScenarioChallengeSpec(
             "clean-architecture",
-            "Modular Monolith Boundary Review",
-            "You need analytics, revision scheduling, and AI feedback in one deployable. Explain where module boundaries should exist today and what to split later.",
+            "Modüler Monolit Sınır İncelemesi",
+            "Analitik, tekrar planlama ve yapay zeka geri bildirimini tek bir dağıtılabilir uygulamada barındırman gerekiyor. Bugün modül sınırlarının nerede olması gerektiğini ve daha sonra neyin ayrılacağını açıkla.",
             TopicDifficulty.Advanced, 45,
-            ["boundary clarity", "data ownership", "future extraction"],
-            "Keep modules separated by application/domain boundaries first, then extract services only when team and deployment pressure justify it.");
+            ["sınır netliği", "veri sahipliği", "ileride ayırma"],
+            "Modülleri önce uygulama/alan (domain) sınırlarıyla ayır; servisleri ancak ekip ve dağıtım baskısı gerektirdiğinde çıkar.");
 
         yield return new ScenarioChallengeSpec(
             "caching-strategy",
-            "Caching Dashboard Reads",
-            "A daily dashboard is slow because it joins user progress, schedules, and question history. Explain whether caching belongs here and how invalidation should work.",
+            "Panel Okumalarını Önbelleğe Alma",
+            "Günlük bir panel; kullanıcı ilerlemesini, planları ve soru geçmişini birleştirdiği için yavaş. Burada önbelleklemenin yeri var mı ve geçersiz kılma nasıl çalışmalı, açıkla.",
             TopicDifficulty.Advanced, 45,
-            ["cache scope", "freshness", "invalidation"],
-            "Cache read models with explicit invalidation on answer submission and plan generation; avoid caching writes or truth-source state.");
+            ["önbellek kapsamı", "tazelik", "geçersiz kılma"],
+            "Okuma modellerini önbelleğe al; cevap gönderiminde ve plan üretiminde açıkça geçersiz kıl; yazmaları veya doğruluk kaynağı durumu önbelleğe alma.");
     }
 
     private sealed record QuestionSpec(
@@ -508,276 +509,276 @@ public static class TrainingPlatformSeeder
         const string caching = "caching-strategy";
         const string pg = "postgresql";
 
-        // ── C# Foundations ────────────────────────────────────────────────
+        // ── C# Temelleri ──────────────────────────────────────────────────
         yield return Mc(csharp, TopicDifficulty.Fundamental,
-            "Which LINQ operator projects each element into a new form?",
-            "Select transforms each input element into a new shape.",
+            "Hangi LINQ operatörü her elemanı yeni bir biçime dönüştürür (projeksiyon)?",
+            "Select her girdi elemanını yeni bir şekle dönüştürür.",
             60, ["linq"], ("Where", false), ("Select", true), ("GroupBy", false));
         yield return Sa(csharp, TopicDifficulty.Fundamental,
-            "What keyword is used to asynchronously wait for a Task result in C#?",
-            "The await keyword asynchronously resumes when the task completes.",
+            "C#'ta bir Task sonucunu asenkron olarak beklemek için hangi anahtar kelime kullanılır?",
+            "await anahtar kelimesi, görev tamamlandığında asenkron olarak yürütmeyi sürdürür.",
             45, ["async"], "await");
         yield return Mc(csharp, TopicDifficulty.Fundamental,
-            "Which of these C# type declarations produces a value type?",
-            "Structs (including record structs) live on the stack or inline in containers and are copied by value; classes, interfaces, and delegates are reference types.",
+            "Aşağıdaki C# tür bildirimlerinden hangisi bir değer türü (value type) üretir?",
+            "Struct'lar (record struct dahil) stack'te veya kapsayıcıların içinde satır içi tutulur ve değerle kopyalanır; class, interface ve delegate referans türleridir.",
             60, ["types"], ("class Order", false), ("record struct Money(decimal Amount)", true), ("interface IOrder", false), ("delegate void Handler()", false));
         yield return Mc(csharp, TopicDifficulty.Intermediate,
-            "What does the property pattern `if (value is { } x)` check?",
-            "`is { }` matches any non-null value and introduces a non-nullable variable — it is a concise null check plus cast.",
-            75, ["pattern-matching"], ("That value is null", false), ("That value is non-null, binding it to x", true), ("That value is an empty collection", false), ("That value has a default constructor", false));
+            "`if (value is { } x)` property (özellik) deseni neyi kontrol eder?",
+            "`is { }` null olmayan herhangi bir değeri eşleştirir ve null olamayan bir değişken tanımlar — özlü bir null kontrolü artı dönüştürmedir.",
+            75, ["pattern-matching"], ("value'nun null olduğunu", false), ("value'nun null olmadığını ve onu x'e bağladığını", true), ("value'nun boş bir koleksiyon olduğunu", false), ("value'nun varsayılan bir kurucusu olduğunu", false));
         yield return Mc(csharp, TopicDifficulty.Intermediate,
-            "Two record instances with identical property values are compared with ==. What is the result?",
-            "Records generate value-based equality: == compares the property values, not the references.",
-            60, ["records"], ("Always false — they are different references", false), ("True — records compare by value", true), ("A compile error — records do not support ==", false));
+            "Aynı özellik değerlerine sahip iki record örneği == ile karşılaştırılıyor. Sonuç nedir?",
+            "Record'lar değere dayalı eşitlik üretir: == referansları değil, özellik değerlerini karşılaştırır.",
+            60, ["records"], ("Her zaman false — farklı referanslardır", false), ("True — record'lar değere göre karşılaştırılır", true), ("Derleme hatası — record'lar == desteklemez", false));
         yield return Sa(csharp, TopicDifficulty.Fundamental,
-            "Which modifier prevents a class from being inherited?",
-            "sealed stops further derivation and lets the JIT devirtualize calls.",
+            "Bir sınıfın kalıtılmasını (inherit) hangi değiştirici (modifier) engeller?",
+            "sealed, daha fazla türetmeyi durdurur ve JIT'in çağrıları devirtualize etmesine olanak tanır.",
             30, ["types"], "sealed");
         yield return Sa(csharp, TopicDifficulty.Intermediate,
-            "LINQ queries against IEnumerable<T> do not run until enumerated. What is this behavior called?",
-            "Deferred (lazy) execution — the query runs when iterated, not when composed.",
-            60, ["linq"], "deferred execution", "deferred", "lazy evaluation", "lazy");
+            "IEnumerable<T> üzerindeki LINQ sorguları, numaralandırılana (enumerate) kadar çalışmaz. Bu davranışın adı nedir?",
+            "Ertelenmiş (tembel) yürütme — sorgu, oluşturulduğunda değil, üzerinde iterasyon yapıldığında çalışır.",
+            60, ["linq"], "ertelenmiş yürütme", "ertelenmiş", "tembel değerlendirme", "deferred execution", "lazy");
         yield return Sc(csharp, TopicDifficulty.Advanced,
-            "A legacy WinForms app calls your async library with .Result and freezes. Explain what is happening and how the library should be written to avoid it.",
-            "Blocking on .Result deadlocks when the continuation needs the captured context; libraries should use ConfigureAwait(false) and callers should stay async end-to-end.",
-            180, ["deadlock", "configureawait", "async", "blocking"]);
+            "Eski bir WinForms uygulaması senin async kütüphaneni .Result ile çağırıyor ve donuyor. Ne olduğunu ve kütüphanenin bunu önlemek için nasıl yazılması gerektiğini açıkla.",
+            ".Result üzerinde bloklamak, devam işi (continuation) yakalanan bağlama ihtiyaç duyduğunda deadlock'a yol açar; kütüphaneler ConfigureAwait(false) kullanmalı ve çağıranlar baştan sona async kalmalıdır.",
+            180, ["deadlock", "configureawait", "async", "bloklama"]);
 
-        // ── ASP.NET Core API Design ───────────────────────────────────────
+        // ── ASP.NET Core API Tasarımı ─────────────────────────────────────
         yield return Mc(aspnet, TopicDifficulty.Intermediate,
-            "Which middleware must execute before authorization for JWT-secured APIs?",
-            "Authentication populates the user principal before authorization checks policies.",
+            "JWT ile korunan API'lerde authorization'dan önce hangi middleware çalışmalıdır?",
+            "Authentication, authorization politikaları denetlemeden önce kullanıcı principal'ını doldurur.",
             75, ["auth", "pipeline"], ("UseAuthorization", false), ("UseAuthentication", true), ("UseCors", false));
         yield return Mc(aspnet, TopicDifficulty.Fundamental,
-            "Which binding source does ASP.NET Core use for a complex type parameter on a [HttpPost] controller action by default?",
-            "With [ApiController], complex types bind from the JSON request body; simple types bind from route or query.",
-            60, ["model-binding"], ("Query string", false), ("Request body", true), ("Route values", false), ("HTTP headers", false));
+            "ASP.NET Core, [HttpPost] bir controller action'ındaki karmaşık tür parametresi için varsayılan olarak hangi bağlama (binding) kaynağını kullanır?",
+            "[ApiController] ile karmaşık türler JSON istek gövdesinden bağlanır; basit türler route veya query'den bağlanır.",
+            60, ["model-binding"], ("Query string", false), ("İstek gövdesi (request body)", true), ("Route değerleri", false), ("HTTP başlıkları", false));
         yield return Mc(aspnet, TopicDifficulty.Fundamental,
-            "A POST endpoint creates a new resource. Which status code best signals success?",
-            "201 Created (ideally with a Location header) is the contract for successful resource creation; 200 hides the semantics.",
+            "Bir POST endpoint'i yeni bir kaynak oluşturuyor. Başarıyı en iyi hangi durum kodu belirtir?",
+            "201 Created (ideal olarak bir Location başlığıyla) başarılı kaynak oluşturmanın sözleşmesidir; 200 semantiği gizler.",
             45, ["http"], ("200 OK", false), ("201 Created", true), ("204 No Content", false), ("302 Found", false));
         yield return Mc(aspnet, TopicDifficulty.Intermediate,
-            "In minimal APIs, what problem does MapGroup solve?",
-            "MapGroup attaches a shared route prefix and shared metadata (filters, auth) to a set of endpoints in one place.",
-            75, ["minimal-apis"], ("It parallelizes endpoint execution", false), ("It applies a common prefix and shared filters/metadata to related endpoints", true), ("It generates OpenAPI documents", false));
+            "Minimal API'lerde MapGroup hangi sorunu çözer?",
+            "MapGroup, tek bir yerde bir grup endpoint'e ortak bir route öneki ve ortak meta veri (filtreler, auth) ekler.",
+            75, ["minimal-apis"], ("Endpoint çalıştırmayı paralelleştirir", false), ("İlişkili endpoint'lere ortak bir önek ve paylaşılan filtre/meta veri uygular", true), ("OpenAPI belgeleri üretir", false));
         yield return Sa(aspnet, TopicDifficulty.Fundamental,
-            "Which attribute marks a controller or action as requiring an authenticated caller?",
-            "[Authorize] gates the endpoint behind the authentication and authorization pipeline.",
+            "Bir controller veya action'ı, çağıranın kimliğinin doğrulanmış olmasını gerektirecek şekilde hangi attribute işaretler?",
+            "[Authorize], endpoint'i kimlik doğrulama ve yetkilendirme hattının arkasına koyar.",
             30, ["auth"], "authorize", "[authorize]");
         yield return Sa(aspnet, TopicDifficulty.Intermediate,
-            "When a middleware component returns without calling the next delegate, what is that called?",
-            "Short-circuiting — the rest of the pipeline never runs, which is how auth failures and static files respond early.",
-            60, ["pipeline"], "short-circuit", "short circuiting", "short-circuiting", "terminating the pipeline");
+            "Bir middleware bileşeni, sonraki delegate'i çağırmadan geri döndüğünde buna ne ad verilir?",
+            "Kısa devre (short-circuit) — hattın geri kalanı hiç çalışmaz; auth hataları ve statik dosyalar bu şekilde erkenden yanıt verir.",
+            60, ["pipeline"], "kısa devre", "kısa devre yapma", "short-circuit", "hattı sonlandırma");
         yield return Sa(aspnet, TopicDifficulty.Advanced,
-            "What media type does RFC 7807 define for standardized API error responses?",
-            "application/problem+json — ASP.NET Core's ProblemDetails serializes to it.",
+            "RFC 7807, standartlaştırılmış API hata yanıtları için hangi medya tipini (media type) tanımlar?",
+            "application/problem+json — ASP.NET Core'un ProblemDetails'i buna serileştirilir.",
             60, ["http", "errors"], "application/problem+json", "problem+json");
         yield return Sc(aspnet, TopicDifficulty.Advanced,
-            "You must rename a field in a JSON contract consumed by mobile clients you cannot force-update. Walk through how you would ship this change safely.",
-            "Version the contract (or accept both shapes), keep the old field during a deprecation window, and communicate the timeline — never break deployed clients in place.",
-            180, ["version", "contract", "backward", "deprecat"]);
+            "Zorla güncelleyemeyeceğin mobil istemcilerin tükettiği bir JSON sözleşmesindeki bir alanı yeniden adlandırman gerekiyor. Bu değişikliği güvenle nasıl yayınlayacağını anlat.",
+            "Sözleşmeyi sürümle (veya her iki şekli de kabul et), eski alanı bir kullanımdan kaldırma penceresi boyunca koru ve zaman çizelgesini duyur — dağıtılmış istemcileri asla yerinde bozma.",
+            180, ["sürüm", "sözleşme", "geriye dönük", "kullanımdan kaldır"]);
 
         // ── EF Core ───────────────────────────────────────────────────────
         yield return Mc(ef, TopicDifficulty.Intermediate,
-            "Which EF Core API is appropriate when you only need read-only query results?",
-            "AsNoTracking avoids change tracker overhead for read-only scenarios.",
+            "Yalnızca salt-okunur sorgu sonuçlarına ihtiyacın olduğunda hangi EF Core API'si uygundur?",
+            "AsNoTracking, salt-okunur senaryolarda change tracker yükünden kaçınır.",
             60, ["ef-core"], ("AsTracking", false), ("AsNoTracking", true), ("Attach", false));
         yield return Mc(ef, TopicDifficulty.Intermediate,
-            "Iterating orders and touching order.Customer.Name fires one extra query per order. What is the standard fix?",
-            "That is the N+1 problem — eager-load the relationship with Include (or project only the needed columns) so it becomes a single query.",
-            90, ["performance", "n+1"], ("Add AsNoTracking", false), ("Use Include to eager-load Customer", true), ("Wrap the loop in a transaction", false), ("Increase the connection pool size", false));
+            "Order'lar üzerinde dönerken order.Customer.Name'e dokunmak her order için ek bir sorgu tetikliyor. Standart çözüm nedir?",
+            "Bu N+1 problemidir — ilişkiyi Include ile önden yükle (veya yalnızca gereken sütunları projekte et) ki tek bir sorguya dönüşsün.",
+            90, ["performance", "n+1"], ("AsNoTracking ekle", false), ("Customer'ı önden yüklemek için Include kullan", true), ("Döngüyü bir transaction'a sar", false), ("Bağlantı havuzu boyutunu artır", false));
         yield return Mc(ef, TopicDifficulty.Intermediate,
-            "What transactional guarantee does a single SaveChanges call provide?",
-            "All changes in that SaveChanges are committed in one implicit transaction — they succeed or roll back together.",
-            60, ["transactions"], ("None — each statement commits independently", false), ("All tracked changes commit atomically in one transaction", true), ("Only inserts are transactional", false));
+            "Tek bir SaveChanges çağrısı hangi transaction garantisini sağlar?",
+            "O SaveChanges'teki tüm değişiklikler tek bir örtük transaction içinde işlenir — hep birlikte başarılı olur ya da geri alınır.",
+            60, ["transactions"], ("Hiçbiri — her ifade bağımsız işlenir", false), ("İzlenen tüm değişiklikler tek bir transaction'da atomik olarak işlenir", true), ("Yalnızca insert'ler transaction içindedir", false));
         yield return Mc(ef, TopicDifficulty.Advanced,
-            "When do you reach for an EF Core value converter?",
-            "Value converters translate between a CLR shape and a column shape — e.g. storing a list as JSON text or an enum as a string.",
-            75, ["mapping"], ("To rename a table", false), ("To map a CLR type to a different database representation, like a list serialized to JSON", true), ("To speed up change tracking", false));
+            "Bir EF Core value converter'a ne zaman başvurursun?",
+            "Value converter'lar bir CLR şekliyle bir sütun şekli arasında çeviri yapar — örn. bir listeyi JSON metni olarak veya bir enum'ı string olarak saklamak.",
+            75, ["mapping"], ("Bir tabloyu yeniden adlandırmak için", false), ("Bir CLR türünü, JSON'a serileştirilmiş bir liste gibi farklı bir veritabanı temsiline eşlemek için", true), ("Change tracking'i hızlandırmak için", false));
         yield return Sa(ef, TopicDifficulty.Fundamental,
-            "Which method eagerly loads a related navigation property in a query?",
-            "Include (with ThenInclude for deeper levels) joins the related data into the query.",
+            "Bir sorguda ilişkili bir navigation özelliğini önden (eager) yükleyen yöntem hangisidir?",
+            "Include (daha derin seviyeler için ThenInclude ile) ilişkili veriyi sorguya join'ler.",
             45, ["querying"], "include");
         yield return Sa(ef, TopicDifficulty.Advanced,
-            "Which operator tells EF Core to run one query per included collection instead of a single join?",
-            "AsSplitQuery avoids cartesian explosion when including multiple collections.",
-            60, ["performance"], "assplitquery", "split query");
+            "EF Core'a, tek bir join yerine dahil edilen her koleksiyon için ayrı sorgu çalıştırmasını hangi operatör söyler?",
+            "AsSplitQuery, birden çok koleksiyon dahil edilirken kartezyen patlamayı önler.",
+            60, ["performance"], "assplitquery", "split query", "bölünmüş sorgu");
         yield return Sa(ef, TopicDifficulty.Intermediate,
-            "What is the DbContext component that records entity states (Added, Modified, Deleted) called?",
-            "The change tracker — SaveChanges reads it to produce SQL.",
-            45, ["ef-core"], "change tracker", "changetracker");
+            "Varlık durumlarını (Added, Modified, Deleted) kaydeden DbContext bileşeninin adı nedir?",
+            "Change tracker (değişiklik izleyici) — SaveChanges, SQL üretmek için onu okur.",
+            45, ["ef-core"], "change tracker", "değişiklik izleyici", "changetracker");
         yield return Sc(ef, TopicDifficulty.Advanced,
-            "A dashboard query got slow as data grew. Describe your diagnosis steps and the levers you would consider in EF Core and the database.",
-            "Capture the generated SQL, EXPLAIN it, check indexes, project only needed columns, disable tracking for reads, and consider split queries or moving aggregation into the database.",
-            240, ["index", "tracking", "projection", "sql"]);
+            "Bir panel sorgusu veri büyüdükçe yavaşladı. Teşhis adımlarını ve EF Core ile veritabanında değerlendireceğin kaldıraçları anlat.",
+            "Üretilen SQL'i yakala, onu EXPLAIN et, indeksleri kontrol et, yalnızca gereken sütunları projekte et, okumalar için tracking'i kapat ve split query'leri ya da toplamayı (aggregation) veritabanına taşımayı değerlendir.",
+            240, ["indeks", "tracking", "projeksiyon", "sql"]);
 
-        // ── Clean Architecture ────────────────────────────────────────────
+        // ── Temiz Mimari ──────────────────────────────────────────────────
         yield return Sc(clean, TopicDifficulty.Advanced,
-            "A controller directly uses DbContext and mapping logic. Which architecture concerns are violated?",
-            "Transport, application, and persistence concerns are leaking into a single layer.",
-            180, ["boundary", "separation", "dependency", "application"]);
+            "Bir controller doğrudan DbContext ve eşleme (mapping) mantığı kullanıyor. Hangi mimari kaygılar ihlal ediliyor?",
+            "Taşıma (transport), uygulama ve kalıcılık kaygıları tek bir katmana sızıyor.",
+            180, ["sınır", "ayrım", "bağımlılık", "uygulama"]);
         yield return Mc(clean, TopicDifficulty.Fundamental,
-            "In Clean Architecture, which direction must source-code dependencies point?",
-            "Dependencies point inward: outer layers (UI, infrastructure) depend on inner layers (application, domain), never the reverse.",
-            60, ["dependencies"], ("Outward, toward infrastructure", false), ("Inward, toward the domain", true), ("Both directions are fine if interfaces are used", false));
+            "Temiz Mimari'de kaynak kod bağımlılıkları hangi yöne işaret etmelidir?",
+            "Bağımlılıklar içe doğru işaret eder: dış katmanlar (UI, altyapı) iç katmanlara (uygulama, alan) bağımlıdır, asla tersi değil.",
+            60, ["dependencies"], ("Dışa doğru, altyapıya", false), ("İçe doğru, alana (domain)", true), ("Arayüz kullanılırsa her iki yön de sorun değil", false));
         yield return Mc(clean, TopicDifficulty.Fundamental,
-            "Where do use cases (application-specific business rules) live?",
-            "The application layer orchestrates use cases; the domain holds enterprise rules, and outer layers only adapt.",
-            60, ["layers"], ("Domain layer", false), ("Application layer", true), ("Infrastructure layer", false), ("API layer", false));
+            "Kullanım senaryoları (uygulamaya özgü iş kuralları) nerede yaşar?",
+            "Uygulama katmanı kullanım senaryolarını orkestre eder; alan (domain) kurumsal kuralları tutar, dış katmanlar yalnızca uyarlar.",
+            60, ["layers"], ("Alan (domain) katmanı", false), ("Uygulama katmanı", true), ("Altyapı katmanı", false), ("API katmanı", false));
         yield return Mc(clean, TopicDifficulty.Intermediate,
-            "Your application layer needs persistence. Where do the repository interface and its EF Core implementation belong?",
-            "The interface is owned by the inner layer that consumes it; the implementation lives in infrastructure — that inversion keeps the core persistence-agnostic.",
-            90, ["dependencies"], ("Both in infrastructure", false), ("Interface in application/domain, implementation in infrastructure", true), ("Interface in the API layer, implementation in the domain", false));
+            "Uygulama katmanının kalıcılığa ihtiyacı var. Repository arayüzü ve onun EF Core uygulaması nereye ait?",
+            "Arayüz, onu tüketen iç katmana aittir; uygulama ise altyapıda yaşar — bu tersine çevirme çekirdeği kalıcılıktan bağımsız tutar.",
+            90, ["dependencies"], ("İkisi de altyapıda", false), ("Arayüz uygulama/alan katmanında, uygulama altyapıda", true), ("Arayüz API katmanında, uygulama alanda", false));
         yield return Mc(clean, TopicDifficulty.Intermediate,
-            "What is the primary job of a DTO at an architectural boundary?",
-            "DTOs decouple the wire/persistence shape from domain objects so inner models can evolve without breaking contracts.",
-            60, ["boundaries"], ("Enforce business invariants", false), ("Carry data across a boundary without exposing domain internals", true), ("Cache query results", false));
+            "Bir mimari sınırda DTO'nun temel görevi nedir?",
+            "DTO'lar, kablo/kalıcılık şeklini alan nesnelerinden ayırır; böylece iç modeller sözleşmeleri bozmadan gelişebilir.",
+            60, ["boundaries"], ("İş değişmezlerini (invariant) zorunlu kılar", false), ("Alanın iç yapısını açığa çıkarmadan veriyi bir sınırın ötesine taşır", true), ("Sorgu sonuçlarını önbelleğe alır", false));
         yield return Sa(clean, TopicDifficulty.Fundamental,
-            "Which SOLID principle says high-level modules should depend on abstractions rather than concrete implementations?",
-            "The Dependency Inversion Principle — the D in SOLID and the mechanism behind Clean Architecture's inward-pointing dependencies.",
-            45, ["solid"], "dependency inversion", "dependency inversion principle", "dip");
+            "Hangi SOLID ilkesi, üst seviye modüllerin somut uygulamalar yerine soyutlamalara bağımlı olması gerektiğini söyler?",
+            "Bağımlılığın Tersine Çevrilmesi İlkesi (Dependency Inversion) — SOLID'deki D ve Temiz Mimari'nin içe dönük bağımlılıklarının arkasındaki mekanizma.",
+            45, ["solid"], "bağımlılığın tersine çevrilmesi", "dependency inversion", "dependency inversion principle", "dip");
         yield return Sa(clean, TopicDifficulty.Fundamental,
-            "In which layer do EF Core entity configurations and migrations belong?",
-            "Infrastructure — persistence mapping is an implementation detail hidden behind application-owned abstractions.",
-            45, ["layers"], "infrastructure");
+            "EF Core varlık yapılandırmaları ve migration'lar hangi katmana aittir?",
+            "Altyapı — kalıcılık eşlemesi, uygulamaya ait soyutlamaların arkasına gizlenmiş bir uygulama ayrıntısıdır.",
+            45, ["layers"], "altyapı", "infrastructure");
         yield return Sa(clean, TopicDifficulty.Intermediate,
-            "What do you call a small immutable domain object whose identity is defined entirely by its values (e.g. Money, DateRange)?",
-            "A value object — equal when its values are equal, with no identity of its own.",
-            60, ["domain"], "value object");
+            "Kimliği tamamen değerleriyle tanımlanan, küçük ve değişmez bir alan nesnesine (örn. Money, DateRange) ne ad verilir?",
+            "Değer nesnesi (value object) — değerleri eşit olduğunda eşittir, kendine ait bir kimliği yoktur.",
+            60, ["domain"], "değer nesnesi", "value object");
 
         // ── CQRS ──────────────────────────────────────────────────────────
         yield return Sa(cqrs, TopicDifficulty.Advanced,
-            "In CQRS, why should read models be separated from command handlers?",
-            "Read paths and write paths have different optimization and consistency concerns.",
-            120, ["cqrs"], "read optimization", "write model", "separate");
+            "CQRS'te okuma modelleri neden komut işleyicilerden (command handler) ayrılmalıdır?",
+            "Okuma yolları ile yazma yollarının farklı optimizasyon ve tutarlılık kaygıları vardır.",
+            120, ["cqrs"], "okuma optimizasyonu", "yazma modeli", "ayrı", "read optimization");
         yield return Mc(cqrs, TopicDifficulty.Fundamental,
-            "What is the defining difference between a command and a query?",
-            "Commands change state and return little or nothing; queries return data and must not change state.",
-            45, ["cqrs"], ("Commands are faster than queries", false), ("Commands mutate state; queries only read it", true), ("Queries run on a different thread", false));
+            "Bir komut (command) ile bir sorgu (query) arasındaki belirleyici fark nedir?",
+            "Komutlar durumu değiştirir ve az şey döndürür ya da hiçbir şey döndürmez; sorgular veri döndürür ve durumu değiştirmemelidir.",
+            45, ["cqrs"], ("Komutlar sorgulardan daha hızlıdır", false), ("Komutlar durumu değiştirir; sorgular yalnızca okur", true), ("Sorgular farklı bir iş parçacığında çalışır", false));
         yield return Mc(cqrs, TopicDifficulty.Intermediate,
-            "Where does input validation belong in a CQRS pipeline?",
-            "In a pipeline step (validator/behavior) that runs before the handler, so handlers only ever see valid commands.",
-            75, ["validation"], ("Inside each controller action", false), ("In a pipeline behavior before the handler executes", true), ("In the database via constraints only", false));
+            "CQRS hattında girdi doğrulaması nereye aittir?",
+            "Handler'dan önce çalışan bir hat adımına (validator/behavior) — böylece handler'lar yalnızca geçerli komutlar görür.",
+            75, ["validation"], ("Her controller action'ının içine", false), ("Handler çalışmadan önce bir pipeline behavior'a", true), ("Yalnızca veritabanında kısıtlamalarla", false));
         yield return Mc(cqrs, TopicDifficulty.Advanced,
-            "You add a separate denormalized read store fed by events. What consistency property must the UI now tolerate?",
-            "Eventual consistency — the read store lags the write store briefly, so reads may not reflect the latest write.",
-            90, ["consistency"], ("Strong consistency", false), ("Eventual consistency", true), ("Serializable isolation", false));
+            "Olaylarla beslenen ayrı, denormalize bir okuma deposu ekliyorsun. Arayüz artık hangi tutarlılık özelliğini tolere etmelidir?",
+            "Nihai tutarlılık (eventual consistency) — okuma deposu yazma deposunun kısa süre gerisinde kalır, bu yüzden okumalar en son yazmayı yansıtmayabilir.",
+            90, ["consistency"], ("Güçlü tutarlılık", false), ("Nihai tutarlılık (eventual consistency)", true), ("Serializable izolasyon", false));
         yield return Sa(cqrs, TopicDifficulty.Fundamental,
-            "What is the component called that receives a command and routes it to its single handler?",
-            "A dispatcher (or mediator) resolves the handler for a command and invokes it.",
+            "Bir komutu alıp onu tek işleyicisine yönlendiren bileşene ne ad verilir?",
+            "Bir dispatcher (veya mediator), bir komut için handler'ı çözümler ve onu çağırır.",
             45, ["cqrs"], "dispatcher", "mediator", "command dispatcher");
         yield return Sa(cqrs, TopicDifficulty.Intermediate,
-            "Cross-cutting concerns like logging and validation wrap every handler via what pattern in MediatR-style pipelines?",
-            "Pipeline behaviors — decorators that compose around the handler call.",
-            60, ["pipeline"], "pipeline behavior", "behavior", "decorator");
+            "Loglama ve doğrulama gibi kesişen kaygılar (cross-cutting), MediatR tarzı hatlarda her handler'ı hangi desenle sarar?",
+            "Pipeline behavior'lar — handler çağrısının etrafında birleşen dekoratörler.",
+            60, ["pipeline"], "pipeline behavior", "behavior", "dekoratör", "decorator");
         yield return Sa(cqrs, TopicDifficulty.Fundamental,
-            "What does the acronym CQRS stand for?",
-            "Command Query Responsibility Segregation.",
-            30, ["cqrs"], "command query responsibility segregation");
+            "CQRS kısaltması neyin açılımıdır?",
+            "Command Query Responsibility Segregation (Komut Sorgu Sorumluluğu Ayrımı).",
+            30, ["cqrs"], "command query responsibility segregation", "komut sorgu sorumluluğu ayrımı");
         yield return Sc(cqrs, TopicDifficulty.Advanced,
-            "A teammate insists every read must go through the full domain model for purity. Argue the CQRS position for a high-traffic list endpoint.",
-            "Reads can bypass the domain: project straight to DTOs from a read model for performance; invariants only matter on the write side.",
-            180, ["read model", "projection", "dto", "performance"]);
+            "Bir takım arkadaşın, saflık uğruna her okumanın tam alan modelinden geçmesi gerektiğinde ısrar ediyor. Yüksek trafikli bir liste endpoint'i için CQRS duruşunu savun.",
+            "Okumalar alanı atlayabilir: performans için doğrudan bir okuma modelinden DTO'lara projekte et; değişmezler (invariant) yalnızca yazma tarafında önemlidir.",
+            180, ["okuma modeli", "projeksiyon", "dto", "performans"]);
 
-        // ── JWT Authentication ────────────────────────────────────────────
+        // ── JWT Kimlik Doğrulama ──────────────────────────────────────────
         yield return Sa(jwt, TopicDifficulty.Intermediate,
-            "Which claim is commonly used as the stable user identifier in ASP.NET Core authorization?",
-            "NameIdentifier is the conventional stable identifier claim for the current principal.",
+            "ASP.NET Core yetkilendirmesinde kararlı kullanıcı tanımlayıcısı olarak yaygın biçimde hangi claim kullanılır?",
+            "NameIdentifier, mevcut principal için alışılmış kararlı tanımlayıcı claim'idir.",
             60, ["jwt"], "nameidentifier", "sub");
         yield return Mc(jwt, TopicDifficulty.Fundamental,
-            "What are the three parts of a JWT, in order?",
-            "header.payload.signature — two base64url-encoded JSON segments plus a signature over them.",
-            45, ["jwt"], ("Header, payload, signature", true), ("Issuer, audience, secret", false), ("Claims, scopes, roles", false));
+            "Bir JWT'nin üç parçası, sırasıyla nelerdir?",
+            "header.payload.signature — base64url ile kodlanmış iki JSON bölümü artı bunların üzerindeki bir imza.",
+            45, ["jwt"], ("Header, payload, signature", true), ("Issuer, audience, secret", false), ("Claim, scope, role", false));
         yield return Mc(jwt, TopicDifficulty.Intermediate,
-            "Where is the safest conventional place for a browser SPA to keep a refresh token?",
-            "An HttpOnly, Secure cookie — JavaScript cannot read it, which blunts XSS token theft; localStorage is readable by any injected script.",
-            90, ["security"], ("localStorage", false), ("An HttpOnly Secure cookie", true), ("A global JavaScript variable", false), ("The URL fragment", false));
+            "Bir tarayıcı SPA'sının bir refresh token'ı tutması için en güvenli alışılmış yer neresidir?",
+            "HttpOnly, Secure bir çerez — JavaScript onu okuyamaz, bu da XSS ile token hırsızlığını köreltir; localStorage ise enjekte edilen herhangi bir betikçe okunabilir.",
+            90, ["security"], ("localStorage", false), ("HttpOnly Secure bir çerez", true), ("Global bir JavaScript değişkeni", false), ("URL fragment'ı", false));
         yield return Mc(jwt, TopicDifficulty.Intermediate,
-            "What does a JWT signature actually guarantee?",
-            "Integrity and authenticity — the payload was not altered and was issued by a key holder. It does NOT encrypt the payload; anyone can read it.",
-            75, ["security"], ("The payload is encrypted", false), ("The token has not been tampered with and comes from the key holder", true), ("The token cannot be replayed", false));
+            "Bir JWT imzası gerçekte neyi garanti eder?",
+            "Bütünlük ve gerçeklik — payload değiştirilmemiştir ve bir anahtar sahibince üretilmiştir. Payload'ı ŞİFRELEMEZ; herkes onu okuyabilir.",
+            75, ["security"], ("Payload şifrelenmiştir", false), ("Token kurcalanmamıştır ve anahtar sahibinden gelir", true), ("Token yeniden oynatılamaz (replay)", false));
         yield return Sa(jwt, TopicDifficulty.Fundamental,
-            "Which registered JWT claim carries the expiration time?",
-            "exp — a Unix timestamp after which validation must fail.",
+            "Kayıtlı hangi JWT claim'i sona erme zamanını taşır?",
+            "exp — sonrasında doğrulamanın başarısız olması gereken bir Unix zaman damgası.",
             30, ["jwt"], "exp");
         yield return Sa(jwt, TopicDifficulty.Intermediate,
-            "HS256 signs tokens with what kind of cryptographic scheme?",
-            "A symmetric HMAC — the same shared secret signs and verifies, unlike RS256's public/private pair.",
-            60, ["crypto"], "hmac", "symmetric");
+            "HS256, token'ları ne tür bir kriptografik şemayla imzalar?",
+            "Simetrik bir HMAC — RS256'nın açık/özel anahtar çiftinin aksine, aynı paylaşılan sır hem imzalar hem doğrular.",
+            60, ["crypto"], "hmac", "simetrik", "symmetric");
         yield return Sa(jwt, TopicDifficulty.Fundamental,
-            "In which HTTP header does a client conventionally send a bearer token?",
+            "Bir istemci, bearer token'ı alışıldık biçimde hangi HTTP başlığında gönderir?",
             "Authorization: Bearer <token>.",
             30, ["http"], "authorization", "authorization: bearer");
         yield return Sc(jwt, TopicDifficulty.Advanced,
-            "Access tokens for your API were leaked through a logging bug. Describe your immediate containment steps and the design changes that limit future blast radius.",
-            "Short expiry limits exposure; rotate signing keys and revoke refresh tokens now; add refresh-token rotation with reuse detection, keep tokens out of logs, and require https everywhere.",
-            240, ["rotation", "revoke", "expiry", "https"]);
+            "API'nin erişim token'ları bir loglama hatasıyla sızdı. Acil kontrol altına alma adımlarını ve gelecekteki etki alanını sınırlayan tasarım değişikliklerini anlat.",
+            "Kısa sona erme süresi maruziyeti sınırlar; imzalama anahtarlarını döndür (rotate) ve refresh token'ları hemen iptal et; yeniden kullanım tespitli refresh token rotasyonu ekle, token'ları loglardan uzak tut ve her yerde https'i zorunlu kıl.",
+            240, ["rotasyon", "iptal", "sona erme", "https"]);
 
-        // ── Caching Strategy ──────────────────────────────────────────────
+        // ── Önbellekleme Stratejisi ───────────────────────────────────────
         yield return Sc(caching, TopicDifficulty.Advanced,
-            "An expensive dashboard query is executed on every request. What trade-offs should guide your caching decision?",
-            "The answer should mention cache freshness, invalidation, read load, and failure modes.",
-            180, ["freshness", "invalidation", "latency", "consistency"]);
+            "Pahalı bir panel sorgusu her istekte çalıştırılıyor. Önbellekleme kararını hangi ödünleşimler yönlendirmeli?",
+            "Cevap; önbellek tazeliğinden, geçersiz kılmadan, okuma yükünden ve hata durumlarından söz etmeli.",
+            180, ["tazelik", "geçersiz kılma", "gecikme", "tutarlılık"]);
         yield return Mc(caching, TopicDifficulty.Intermediate,
-            "Which sequence describes the cache-aside pattern?",
-            "The application checks the cache first, loads from the source on a miss, then writes the result back into the cache.",
-            75, ["patterns"], ("Write to cache and database simultaneously on every write", false), ("Check cache; on miss load from source and populate the cache", true), ("The cache itself lazily queries the database", false));
+            "Hangi sıralama cache-aside desenini tarif eder?",
+            "Uygulama önce önbelleği kontrol eder, ıskalamada (miss) kaynaktan yükler, sonra sonucu tekrar önbelleğe yazar.",
+            75, ["patterns"], ("Her yazmada eşzamanlı olarak hem önbelleğe hem veritabanına yaz", false), ("Önbelleği kontrol et; ıskalamada kaynaktan yükle ve önbelleği doldur", true), ("Önbellek kendisi tembelce veritabanını sorgular", false));
         yield return Mc(caching, TopicDifficulty.Advanced,
-            "A hot cache key expires and 500 concurrent requests hammer the database rebuilding it. Which technique prevents this stampede?",
-            "Lock/single-flight the rebuild so one caller recomputes while others wait or serve stale — jittered TTLs also help spread expiry.",
-            90, ["stampede"], ("Shorter TTLs on every key", false), ("Single-flight locking so only one request recomputes the value", true), ("Caching the value in two caches", false));
+            "Sıcak bir önbellek anahtarı sona eriyor ve 500 eşzamanlı istek onu yeniden oluşturmak için veritabanına yükleniyor. Bu izdihamı (stampede) hangi teknik önler?",
+            "Yeniden oluşturmayı kilitle/tek-uçuş (single-flight) yap; böylece bir çağıran yeniden hesaplarken diğerleri bekler veya bayat veri sunar — dağıtılmış (jitter'lı) TTL'ler de sona ermeyi yaymaya yardımcı olur.",
+            90, ["stampede"], ("Her anahtarda daha kısa TTL'ler", false), ("Yalnızca bir isteğin değeri yeniden hesaplaması için tek-uçuş kilitleme", true), ("Değeri iki önbellekte saklama", false));
         yield return Mc(caching, TopicDifficulty.Fundamental,
-            "Which of these is the safest candidate for aggressive caching?",
-            "Slowly-changing reference data (e.g. a country list) tolerates long TTLs; per-user balances and inventory counts go stale dangerously fast.",
-            60, ["strategy"], ("A user's account balance", false), ("A country/currency reference list", true), ("Live inventory counts during a sale", false));
+            "Aşağıdakilerden hangisi agresif önbelleklemeye en uygun adaydır?",
+            "Yavaş değişen referans verisi (örn. ülke listesi) uzun TTL'leri tolere eder; kullanıcı bazlı bakiyeler ve stok sayıları tehlikeli biçimde hızlı bayatlar.",
+            60, ["strategy"], ("Bir kullanıcının hesap bakiyesi", false), ("Bir ülke/para birimi referans listesi", true), ("İndirim sırasında canlı stok sayıları", false));
         yield return Sa(caching, TopicDifficulty.Fundamental,
-            "Which eviction policy removes the entry that has gone unused the longest?",
-            "LRU — least recently used.",
-            30, ["eviction"], "lru", "least recently used");
+            "Hangi tahliye (eviction) politikası en uzun süredir kullanılmayan girdiyi kaldırır?",
+            "LRU — en az son kullanılan (least recently used).",
+            30, ["eviction"], "lru", "en az son kullanılan", "least recently used");
         yield return Sa(caching, TopicDifficulty.Intermediate,
-            "Which HTTP response header controls how clients and proxies may cache a response?",
+            "Hangi HTTP yanıt başlığı, istemcilerin ve proxy'lerin bir yanıtı nasıl önbelleğe alabileceğini denetler?",
             "Cache-Control (max-age, no-store, public/private…).",
             45, ["http"], "cache-control");
         yield return Sa(caching, TopicDifficulty.Fundamental,
-            "Name the in-memory data store most commonly used as a distributed cache with .NET.",
-            "Redis — via IDistributedCache or StackExchange.Redis.",
+            ".NET ile dağıtık önbellek olarak en yaygın kullanılan bellek içi veri deposunun adını yaz.",
+            "Redis — IDistributedCache veya StackExchange.Redis üzerinden.",
             30, ["redis"], "redis");
         yield return Mc(caching, TopicDifficulty.Advanced,
-            "In write-through caching, what happens on a write?",
-            "The write goes to the cache and the underlying store together, keeping them consistent at the cost of write latency.",
-            75, ["patterns"], ("Only the cache is updated; the store syncs later", false), ("Cache and backing store are updated together synchronously", true), ("The cache entry is deleted and lazily reloaded", false));
+            "Write-through (yazarken geçirmeli) önbelleklemede bir yazmada ne olur?",
+            "Yazma, önbelleğe ve alttaki depoya birlikte gider; yazma gecikmesi pahasına ikisini tutarlı tutar.",
+            75, ["patterns"], ("Yalnızca önbellek güncellenir; depo sonra senkronize olur", false), ("Önbellek ve arka depo senkron olarak birlikte güncellenir", true), ("Önbellek girdisi silinir ve tembelce yeniden yüklenir", false));
 
         // ── PostgreSQL ────────────────────────────────────────────────────
         yield return Sa(pg, TopicDifficulty.Intermediate,
-            "What kind of PostgreSQL index is usually the default choice for equality lookups?",
-            "B-tree indexes are the general default for equality and range lookups.",
-            45, ["postgres"], "btree", "b-tree");
+            "Eşitlik aramaları için genellikle varsayılan seçim olan PostgreSQL indeks türü hangisidir?",
+            "B-tree indeksleri, eşitlik ve aralık aramaları için genel varsayılandır.",
+            45, ["postgres"], "btree", "b-tree", "b-ağacı");
         yield return Mc(pg, TopicDifficulty.Intermediate,
-            "What does EXPLAIN ANALYZE do that plain EXPLAIN does not?",
-            "It actually executes the query and reports real timings and row counts alongside the plan — invaluable, but beware running it on writes.",
-            75, ["performance"], ("Formats the plan as JSON", false), ("Executes the query and shows actual timings and row counts", true), ("Analyzes table statistics for the planner", false));
+            "EXPLAIN ANALYZE, sade EXPLAIN'in yapmadığı neyi yapar?",
+            "Sorguyu gerçekten çalıştırır ve planla birlikte gerçek süreleri ve satır sayılarını raporlar — çok değerlidir, ancak yazma işlemlerinde çalıştırmaya dikkat et.",
+            75, ["performance"], ("Planı JSON olarak biçimlendirir", false), ("Sorguyu çalıştırır ve gerçek süreleri ile satır sayılarını gösterir", true), ("Planlayıcı için tablo istatistiklerini analiz eder", false));
         yield return Mc(pg, TopicDifficulty.Intermediate,
-            "Which transaction isolation level does PostgreSQL use by default?",
-            "Read Committed — each statement sees data committed before that statement began.",
+            "PostgreSQL varsayılan olarak hangi transaction izolasyon seviyesini kullanır?",
+            "Read Committed — her ifade, o ifade başlamadan önce işlenmiş (commit) veriyi görür.",
             60, ["transactions"], ("Serializable", false), ("Read Committed", true), ("Repeatable Read", false), ("Read Uncommitted", false));
         yield return Mc(pg, TopicDifficulty.Advanced,
-            "When is a partial index the right tool?",
-            "When queries only ever touch a predictable slice of rows (e.g. WHERE status = 'active') — the index stays small and writes to other rows skip it.",
-            90, ["indexes"], ("When the table is small", false), ("When queries filter on a fixed predicate matching a subset of rows", true), ("When you need uniqueness across all rows", false));
+            "Kısmi (partial) indeks ne zaman doğru araçtır?",
+            "Sorgular yalnızca öngörülebilir bir satır dilimine dokunduğunda (örn. WHERE status = 'active') — indeks küçük kalır ve diğer satırlara yazmalar onu atlar.",
+            90, ["indexes"], ("Tablo küçük olduğunda", false), ("Sorgular, satırların bir alt kümesiyle eşleşen sabit bir koşula göre filtrelediğinde", true), ("Tüm satırlarda benzersizliğe ihtiyaç duyduğunda", false));
         yield return Sa(pg, TopicDifficulty.Fundamental,
-            "Which SQL command shows the execution plan the PostgreSQL planner chose for a query?",
-            "EXPLAIN (optionally with ANALYZE to run it for real numbers).",
+            "PostgreSQL planlayıcısının bir sorgu için seçtiği yürütme planını hangi SQL komutu gösterir?",
+            "EXPLAIN (gerçek sayılar için isteğe bağlı olarak ANALYZE ile çalıştırılır).",
             30, ["performance"], "explain");
         yield return Sa(pg, TopicDifficulty.Advanced,
-            "Which index type serves jsonb containment queries (the @> operator) efficiently?",
-            "GIN — generalized inverted indexes handle multi-value containment for jsonb and arrays.",
+            "jsonb kapsama sorgularına (@> operatörü) verimli hizmet eden indeks türü hangisidir?",
+            "GIN — genelleştirilmiş ters indeksler (generalized inverted index), jsonb ve diziler için çok değerli kapsamayı ele alır.",
             60, ["indexes", "jsonb"], "gin");
         yield return Sa(pg, TopicDifficulty.Intermediate,
-            "What does MVCC stand for in PostgreSQL's concurrency model?",
-            "Multiversion Concurrency Control — readers see snapshots instead of blocking writers.",
-            45, ["concurrency"], "multiversion concurrency control", "multi-version concurrency control");
+            "PostgreSQL'in eşzamanlılık modelinde MVCC neyin kısaltmasıdır?",
+            "Multiversion Concurrency Control (Çok Sürümlü Eşzamanlılık Denetimi) — okuyucular yazanları bloklamak yerine anlık görüntüler (snapshot) görür.",
+            45, ["concurrency"], "multiversion concurrency control", "çok sürümlü eşzamanlılık denetimi", "multi-version concurrency control");
         yield return Sc(pg, TopicDifficulty.Advanced,
-            "A heavily-updated table keeps growing on disk and scans get slower even though row count is stable. Explain what is happening and how PostgreSQL deals with it.",
-            "Updates leave dead tuples behind under MVCC — that is table bloat; VACUUM (and a properly tuned autovacuum) reclaims dead space, and fillfactor/HOT updates reduce churn.",
-            240, ["vacuum", "dead", "autovacuum", "bloat"]);
+            "Yoğun güncellenen bir tablo diskte büyümeye devam ediyor ve satır sayısı sabit olsa bile taramalar yavaşlıyor. Ne olduğunu ve PostgreSQL'in bununla nasıl başa çıktığını açıkla.",
+            "Güncellemeler MVCC altında ölü satırlar (dead tuple) bırakır — bu tablo şişmesidir (bloat); VACUUM (ve düzgün ayarlanmış bir autovacuum) ölü alanı geri kazanır, fillfactor/HOT güncellemeleri ise çalkantıyı azaltır.",
+            240, ["vacuum", "ölü", "autovacuum", "şişme"]);
     }
 }

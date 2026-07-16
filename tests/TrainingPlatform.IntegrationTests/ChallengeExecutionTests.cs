@@ -50,7 +50,7 @@ public sealed class ChallengeExecutionTests(StubRunnerApiFactory factory) : ICla
     [Fact]
     public async Task All_tests_passing_scores_100_and_records_progress()
     {
-        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 4, 0, "All 4 tests passed.", 120);
+        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 4, 0, "4 testin tamamı geçti.", 120);
         var client = factory.CreateClient();
         var auth = await ApiFlows.RegisterAsync(client);
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", auth.AccessToken);
@@ -65,7 +65,7 @@ public sealed class ChallengeExecutionTests(StubRunnerApiFactory factory) : ICla
         Assert.Equal(ChallengeOutcome.Passed, dto.Outcome);
         Assert.Equal(4, dto.TestsPassed);
         Assert.Equal(4, dto.TestsTotal);
-        Assert.Contains("passed", dto.Feedback, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("geçti", dto.Feedback, StringComparison.OrdinalIgnoreCase);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<TrainingPlatformDbContext>();
@@ -79,7 +79,7 @@ public sealed class ChallengeExecutionTests(StubRunnerApiFactory factory) : ICla
     [Fact]
     public async Task Partial_pass_scores_the_ratio_and_needs_work()
     {
-        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 1, 3, "1 of 4 tests passed.", 150);
+        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 1, 3, "4 testten 1 tanesi geçti.", 150);
         var client = await ApiFlows.RegisteredClientAsync(factory);
         var challengeId = await RunnableChallengeIdAsync();
 
@@ -95,7 +95,7 @@ public sealed class ChallengeExecutionTests(StubRunnerApiFactory factory) : ICla
     [Fact]
     public async Task Compile_failure_scores_zero_with_the_error_in_feedback()
     {
-        StubCodeExecutionService.Next = new CodeExecutionResult(false, 0, 0, 0, "Compilation failed.\nerror CS1002: ; expected", 80);
+        StubCodeExecutionService.Next = new CodeExecutionResult(false, 0, 0, 0, "Derleme başarısız oldu.\nerror CS1002: ; expected", 80);
         var client = await ApiFlows.RegisteredClientAsync(factory);
         var challengeId = await RunnableChallengeIdAsync();
 
@@ -106,13 +106,13 @@ public sealed class ChallengeExecutionTests(StubRunnerApiFactory factory) : ICla
         Assert.NotNull(dto);
         Assert.Equal(0, dto.Score);
         Assert.Equal(ChallengeOutcome.NeedsWork, dto.Outcome);
-        Assert.Contains("Compilation failed", dto.Feedback);
+        Assert.Contains("Derleme başarısız", dto.Feedback);
     }
 
     [Fact]
     public async Task Run_endpoint_reports_results_without_recording_a_submission()
     {
-        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 2, 2, "2 of 4 tests passed.", 90);
+        StubCodeExecutionService.Next = new CodeExecutionResult(true, 4, 2, 2, "4 testten 2 tanesi geçti.", 90);
         var client = await ApiFlows.RegisteredClientAsync(factory);
         var challengeId = await RunnableChallengeIdAsync();
 
@@ -202,6 +202,6 @@ public sealed class ChallengeExecutionDisabledTests(TrainingPlatformApiFactory f
         Assert.NotNull(weak);
         Assert.Equal(0, weak.Score);
         Assert.Equal(ChallengeOutcome.NeedsWork, weak.Outcome);
-        Assert.Contains("Not covered yet", weak.Feedback);
+        Assert.Contains("Henüz değinilmeyenler", weak.Feedback);
     }
 }
