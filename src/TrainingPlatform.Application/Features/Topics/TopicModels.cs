@@ -51,13 +51,13 @@ public sealed record TopicContentSummary(
 
         var codingChallenges = await dbContext.CodingChallenges
             .AsNoTracking()
-            .Where(challenge => topicIds.Contains(challenge.TopicId))
+            .Where(challenge => challenge.IsActive && topicIds.Contains(challenge.TopicId))
             .Select(challenge => new { challenge.TopicId, challenge.Id, challenge.Title, challenge.Difficulty, challenge.EstimatedMinutes })
             .ToListAsync(cancellationToken);
 
         var scenarioChallenges = await dbContext.ScenarioChallenges
             .AsNoTracking()
-            .Where(challenge => topicIds.Contains(challenge.TopicId))
+            .Where(challenge => challenge.IsActive && topicIds.Contains(challenge.TopicId))
             .Select(challenge => new { challenge.TopicId, challenge.Id, challenge.Title, challenge.Difficulty, challenge.EstimatedMinutes })
             .ToListAsync(cancellationToken);
 
