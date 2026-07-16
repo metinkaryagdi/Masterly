@@ -32,4 +32,18 @@ public sealed class QuestionsController(ICommandDispatcher commandDispatcher, IQ
         var response = await commandDispatcher.Dispatch<CreateQuestionCommand, QuestionDto>(command, cancellationToken);
         return Ok(response);
     }
+
+    /// <summary>
+    /// Generates a fresh Turkish question with the AI model, audits it, and
+    /// persists it only if the audit passes. Returns the audit report either way:
+    /// 200 with the stored question, or 422 with the reasons it was rejected.
+    /// </summary>
+    [HttpPost("generate")]
+    [ProducesResponseType<GeneratedQuestionResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<GeneratedQuestionResult>(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<GeneratedQuestionResult>> Generate(GenerateQuestionCommand command, CancellationToken cancellationToken)
+    {
+        var response = await commandDispatcher.Dispatch<GenerateQuestionCommand, GeneratedQuestionResult>(command, cancellationToken);
+        return response.Persisted ? Ok(response) : UnprocessableEntity(response);
+    }
 }

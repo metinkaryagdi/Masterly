@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
         services.AddScoped<IQuestionEvaluationService, QuestionEvaluationService>();
+        services.AddSingleton<IGeneratedQuestionAuditor, GeneratedQuestionAuditor>();
         services.AddScoped<IRevisionEngine, RevisionEngine>();
         services.AddScoped<IDailyStudyPlanService, DailyStudyPlanService>();
 

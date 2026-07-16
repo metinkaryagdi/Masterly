@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using TrainingPlatform.Application.Abstractions.AI;
 using TrainingPlatform.Application.Abstractions.Persistence;
 using TrainingPlatform.Application.Abstractions.Time;
+using TrainingPlatform.Domain.Common.Enumerations;
 using TrainingPlatform.Domain.Progress;
 
 namespace TrainingPlatform.Infrastructure.AI;
@@ -43,37 +44,53 @@ internal static class PromptCatalog
 {
     public static string BuildQuestionGenerationPrompt(QuestionGenerationRequest request)
     {
+        var typeRule = request.QuestionType switch
+        {
+            QuestionType.MultipleChoice =>
+                "Tam 3 veya 4 \"options\" üret; SADECE birinin \"isCorrect\" değeri true olsun; \"acceptedAnswers\" boş dizi olsun.",
+            QuestionType.ShortAnswer =>
+                "\"options\" boş dizi olsun; \"acceptedAnswers\" 1-4 kısa kabul edilebilir cevap içersin (Türkçe ya da teknik terim).",
+            _ =>
+                "\"options\" boş dizi olsun; \"acceptedAnswers\" cevap metninde geçmesi beklenen 3-5 Türkçe anahtar kelime içersin."
+        };
+
         return $$"""
-                 You are generating deterministic training content support output.
-                 Return valid JSON with properties:
-                 prompt, explanation, acceptedAnswers, options.
-                 Topic: {{request.TopicName}}
-                 QuestionType: {{request.QuestionType}}
-                 Difficulty: {{request.Difficulty}}
-                 Tags: {{string.Join(", ", request.Tags)}}
-                 PromptVersion: {{request.PromptVersion}}
+                 .NET backend eğitimi için TÜRKÇE bir sınav sorusu üret.
+                 SADECE geçerli JSON döndür; markdown, açıklama ya da kod bloğu ekleme.
+                 JSON anahtarları tam olarak şunlar olmalı: prompt, explanation, acceptedAnswers, options.
+                 - "prompt": soru metni (Türkçe).
+                 - "explanation": cevabın neden doğru olduğunu anlatan kısa açıklama (Türkçe).
+                 - "options": her biri {"text": string, "isCorrect": bool} olan nesneler dizisi.
+                 - "acceptedAnswers": string dizisi.
+                 Soru tipi kuralı: {{typeRule}}
+                 Konu: {{request.TopicName}}
+                 Soru tipi: {{request.QuestionType}}
+                 Zorluk: {{request.Difficulty}}
+                 Etiketler: {{string.Join(", ", request.Tags)}}
+                 Tüm metinler Türkçe olmalı. Sürüm: {{request.PromptVersion}}
                  """;
     }
 
     public static string BuildAnswerEvaluationPrompt(AnswerEvaluationRequest request)
     {
         return $$"""
-                 Explain the submitted answer at coaching level.
-                 Do not provide a score. Keep it concise.
-                 PromptVersion: {{request.PromptVersion}}
-                 Question: {{request.Prompt}}
-                 SubmittedAnswer: {{request.SubmittedAnswer}}
+                 Gönderilen cevabı bir koç gibi açıkla.
+                 Puan verme. Kısa ve öz tut. Geri bildirimi tamamen Türkçe yaz.
+                 Sürüm: {{request.PromptVersion}}
+                 Soru: {{request.Prompt}}
+                 Gönderilen cevap: {{request.SubmittedAnswer}}
                  """;
     }
 
     public static string BuildCodeFeedbackPrompt(CodeFeedbackRequest request)
     {
         return $$"""
-                 Review this backend coding submission and provide feedback only.
-                 Do not assign deterministic truth. Keep it concise.
-                 PromptVersion: {{request.PromptVersion}}
-                 Challenge: {{request.ChallengeDescription}}
-                 SubmittedCode:
+                 Bu backend kod gönderimini incele ve yalnızca geri bildirim ver.
+                 Kesin doğru/yanlış hükmü verme. Kısa ve öz tut.
+                 Geri bildirimi tamamen Türkçe yaz; kod terimleri ve tip adları İngilizce kalabilir.
+                 Sürüm: {{request.PromptVersion}}
+                 Görev: {{request.ChallengeDescription}}
+                 Gönderilen kod:
                  {{request.SubmittedCode}}
                  """;
     }
@@ -81,11 +98,12 @@ internal static class PromptCatalog
     public static string BuildScenarioFeedbackPrompt(ScenarioEvaluationRequest request)
     {
         return $$"""
-                 Review the architecture response and provide feedback only.
-                 Highlight trade-offs and missed considerations.
-                 PromptVersion: {{request.PromptVersion}}
-                 Scenario: {{request.Scenario}}
-                 Response:
+                 Bu mimari senaryo yanıtını incele ve yalnızca geri bildirim ver.
+                 Ödünleşimleri (trade-off) ve gözden kaçan noktaları vurgula.
+                 Geri bildirimi tamamen Türkçe yaz; teknik terimler İngilizce kalabilir.
+                 Sürüm: {{request.PromptVersion}}
+                 Senaryo: {{request.Scenario}}
+                 Yanıt:
                  {{request.ResponseText}}
                  """;
     }
@@ -106,10 +124,36 @@ internal sealed class OllamaQuestionGenerationService(
 
         await LogAsync(request.TopicId, "QuestionGeneration", request.PromptVersion, prompt, response, stopwatch.ElapsedMilliseconds, true, cancellationToken);
 
-        var payload = JsonSerializer.Deserialize<GeneratedQuestionPayload>(response, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+        var json = ExtractJsonObject(response);
+        var payload = JsonSerializer.Deserialize<GeneratedQuestionPayload>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))
                       ?? throw new InvalidOperationException("Ollama returned an invalid question payload.");
 
-        return new GeneratedQuestion(payload.Prompt, payload.Explanation, payload.AcceptedAnswers, payload.Options.Select(option => (option.Text, option.IsCorrect)).ToList());
+        return new GeneratedQuestion(
+            payload.Prompt ?? string.Empty,
+            payload.Explanation ?? string.Empty,
+            payload.AcceptedAnswers ?? [],
+            (payload.Options ?? []).Select(option => (option.Text, option.IsCorrect)).ToList());
+    }
+
+    /// <summary>
+    /// Local models often wrap JSON in prose or ```json fences. Pull out the
+    /// first balanced top-level object so the payload still deserializes.
+    /// </summary>
+    private static string ExtractJsonObject(string response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            throw new InvalidOperationException("Ollama returned an empty response.");
+        }
+
+        var start = response.IndexOf('{');
+        var end = response.LastIndexOf('}');
+        if (start < 0 || end <= start)
+        {
+            throw new InvalidOperationException("Ollama response did not contain a JSON object.");
+        }
+
+        return response.Substring(start, end - start + 1);
     }
 
     private async Task LogAsync(Guid topicId, string operationType, string promptVersion, string prompt, string response, long latencyMs, bool wasSuccessful, CancellationToken cancellationToken)
