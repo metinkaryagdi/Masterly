@@ -7,7 +7,7 @@
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL_16-4169E1?logo=postgresql&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
-![xUnit](https://img.shields.io/badge/xUnit-512BD4?logoColor=white)
+![xUnit](https://img.shields.io/badge/xUnit-512BD4?logoColor=white) [![CI](https://github.com/metinkaryagdi/Masterly/actions/workflows/ci.yml/badge.svg)](https://github.com/metinkaryagdi/Masterly/actions/workflows/ci.yml)
 
 ---
 
