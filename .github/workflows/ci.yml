@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build & test (.NET 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # The solution file is in the .slnx format, which only the .NET 9+ SDK can
+      # read, so the test projects are built directly — they pull in the rest of
+      # the solution through project references. Integration tests run on
+      # WebApplicationFactory + in-memory Sqlite, so no PostgreSQL or Docker is
+      # required in CI.
+
+      - name: Unit tests
+        run: >
+          dotnet test tests/TrainingPlatform.UnitTests/TrainingPlatform.UnitTests.csproj
+          --configuration Release --verbosity normal
+
+      - name: Integration tests
+        run: >
+          dotnet test tests/TrainingPlatform.IntegrationTests/TrainingPlatform.IntegrationTests.csproj
+          --configuration Release --verbosity normal
