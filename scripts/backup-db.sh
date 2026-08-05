@@ -10,10 +10,10 @@ set -euo pipefail
 
 BACKUP_DIR="${1:-backups}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-OUT_FILE="${BACKUP_DIR}/training_platform_${TIMESTAMP}.sql.gz"
+OUT_FILE="${BACKUP_DIR}/codecraftnet_db_${TIMESTAMP}.sql.gz"
 
 mkdir -p "$BACKUP_DIR"
 
-docker compose exec -T db pg_dump -U postgres --format=plain training_platform | gzip > "$OUT_FILE"
+docker compose exec -T db pg_dump -U postgres --format=plain codecraftnet_db | gzip > "$OUT_FILE"
 
 echo "Backup written to ${OUT_FILE}"

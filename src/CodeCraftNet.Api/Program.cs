@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
@@ -80,9 +80,9 @@ if (swaggerEnabled)
     {
         options.SwaggerDoc("v1", new OpenApiInfo
         {
-            Title = "Training Platform API",
+            Title = "CodeCraft.NET API",
             Version = "v1",
-            Description = "Adaptive training platform: topics, questions, daily study plans, spaced-repetition revisions, and AI-assisted feedback."
+            Description = "Adaptive training platform for .NET backend skills: topics, questions, daily study plans, spaced-repetition revisions, and code challenges."
         });
 
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

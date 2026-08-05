@@ -17,14 +17,14 @@ if [[ ! -f "$BACKUP_FILE" ]]; then
   exit 1
 fi
 
-read -r -p "This will DROP and recreate 'training_platform' on the running db service. Continue? [y/N] " CONFIRM
+read -r -p "This will DROP and recreate 'codecraftnet_db' on the running db service. Continue? [y/N] " CONFIRM
 if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
   echo "Aborted."
   exit 1
 fi
 
-docker compose exec -T db psql -U postgres -c "DROP DATABASE IF EXISTS training_platform;"
-docker compose exec -T db psql -U postgres -c "CREATE DATABASE training_platform;"
-gunzip -c "$BACKUP_FILE" | docker compose exec -T db psql -U postgres -d training_platform
+docker compose exec -T db psql -U postgres -c "DROP DATABASE IF EXISTS codecraftnet_db;"
+docker compose exec -T db psql -U postgres -c "CREATE DATABASE codecraftnet_db;"
+gunzip -c "$BACKUP_FILE" | docker compose exec -T db psql -U postgres -d codecraftnet_db
 
 echo "Restore complete from ${BACKUP_FILE}"
