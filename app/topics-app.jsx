@@ -1,4 +1,4 @@
-// topics-app.jsx
+﻿// topics-app.jsx
 // Topic catalogue with master-detail layout. Lists every topic with mastery,
 // drills into a detail pane that exposes description, dependencies, sample
 // questions, and a "start practice" CTA into Practice.html.
@@ -8,7 +8,7 @@ const { useState: tS, useEffect: tE, useMemo: tM } = React;
 const TOPICS_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "sort": "weak-first",
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -496,7 +496,7 @@ function App() {
         {/* Footer */}
         <footer className="mt-10 pb-12 flex items-center justify-between text-[11px] font-mono"
                 style={{ color: 'var(--ink-mute)' }}>
-          <span>Masterly · catalogue</span>
+          <span>CodeCraft.NET · catalogue</span>
           <span>GET /api/topics</span>
         </footer>
       </main>

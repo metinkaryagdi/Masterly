@@ -1,4 +1,4 @@
-// onboarding-app.jsx
+﻿// onboarding-app.jsx
 // Five-step welcome flow: Welcome → Goals → Self-assessment → Generating → Reveal.
 // Persists preferences to localStorage, marks the user onboarded, and hands off
 // to the dashboard with the freshly-generated plan.
@@ -8,7 +8,7 @@ const { useState: oS, useEffect: oE, useMemo: oM, useRef: oR } = React;
 const ONB_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "skipGen": false,
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -58,7 +58,7 @@ function Topbar({ step, totalSteps, onSkip }) {
         <div className="tp-mark">M</div>
         <div className="font-semibold tracking-tight text-[14.5px]"
              style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-          Masterly
+          CodeCraft.NET
         </div>
       </div>
       <div className="flex items-center gap-2.5">

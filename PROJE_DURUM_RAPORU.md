@@ -1,4 +1,4 @@
-# Proje Durum Raporu
+﻿# Proje Durum Raporu
 
 Rapor tarihi: 2026-07-09
 
@@ -23,11 +23,11 @@ Mevcut ana moduller:
 
 Not: Soru havuzu, aciklamalar, secenekler ve challenge icerikleri Turkce'ye cevrildi. Lab (kod/senaryo) arayuzu tamamen Turkce yerellestirildi.
 
-Kod tabani test yapisi da iceriyor. `tests/TrainingPlatform.UnitTests` servis ve domain davranislarini, `tests/TrainingPlatform.IntegrationTests` API akislari ve endpoint davranislarini kapsiyor.
+Kod tabani test yapisi da iceriyor. `tests/CodeCraftNet.UnitTests` servis ve domain davranislarini, `tests/CodeCraftNet.IntegrationTests` API akislari ve endpoint davranislarini kapsiyor.
 
 ## Soru Havuzu ve Uretim Mantigi
 
-Temel kaynak, `src/TrainingPlatform.Infrastructure/Seeding/TrainingPlatformSeeder.cs` icindeki elle hazirlanmis, kuralli ve Turkce bir soru havuzudur. Buna ek olarak sorular AI ile de uretilip denetimden gecirilerek havuza eklenebilir (asagidaki "AI ile Soru Uretimi ve Denetim" bolumu).
+Temel kaynak, `src/CodeCraftNet.Infrastructure/Seeding/CodeCraftNetSeeder.cs` icindeki elle hazirlanmis, kuralli ve Turkce bir soru havuzudur. Buna ek olarak sorular AI ile de uretilip denetimden gecirilerek havuza eklenebilir (asagidaki "AI ile Soru Uretimi ve Denetim" bolumu).
 
 API baslarken seeder calisir:
 

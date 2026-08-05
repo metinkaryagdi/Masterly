@@ -1,4 +1,4 @@
-# Masterly
+# CodeCraft.NET
 
 **An adaptive training platform for .NET backend skills** — daily study plans drawn from a per-topic question pool, spaced-repetition-style revision, topic-level mastery scoring, and coding/scenario challenges judged by an isolated code runner. Clean-architecture ASP.NET Core 8 backend, React frontend.
 
@@ -13,7 +13,7 @@
 
 ## Why this project
 
-Most "practice platforms" show you a fixed question bank in a fixed order. Masterly was built to solve the problem I actually had while training my own backend skills: figuring out **what to practice today**, given what I'm weak at, what I practiced recently, and what I already know cold — without a human curating the plan. It also had to grade real code, not just multiple choice, since that's the only way to actually validate backend skill.
+Most "practice platforms" show you a fixed question bank in a fixed order. CodeCraft.NET was built to solve the problem I actually had while training my own backend skills: figuring out **what to practice today**, given what I'm weak at, what I practiced recently, and what I already know cold — without a human curating the plan. It also had to grade real code, not just multiple choice, since that's the only way to actually validate backend skill.
 
 ---
 
@@ -113,8 +113,8 @@ First run: open `http://localhost:8080`, create an account, and walk through onb
 Requires the .NET 8 SDK and a reachable PostgreSQL (`docker compose up -d db` works fine).
 
 ```bash
-dotnet run --project src/TrainingPlatform.Api        # API on http://localhost:5000
-python -m http.server 8080 -d app                    # frontend
+dotnet run --project src/CodeCraftNet.Api        # API on http://localhost:5000
+python -m http.server 8080 -d app                     # frontend
 ```
 
 Each frontend page's Tweaks panel can flip `demoMode` on to browse with mock data and no backend.
@@ -122,8 +122,8 @@ Each frontend page's Tweaks panel can flip `demoMode` on to browse with mock dat
 ## Tests
 
 ```bash
-dotnet test tests/TrainingPlatform.UnitTests/TrainingPlatform.UnitTests.csproj
-dotnet test tests/TrainingPlatform.IntegrationTests/TrainingPlatform.IntegrationTests.csproj
+dotnet test tests/CodeCraftNet.UnitTests/CodeCraftNet.UnitTests.csproj
+dotnet test tests/CodeCraftNet.IntegrationTests/CodeCraftNet.IntegrationTests.csproj
 ```
 
 Integration tests boot the real pipeline via `WebApplicationFactory` against in-memory Sqlite — no database or Docker required. Both suites run on every push via [GitHub Actions](.github/workflows/ci.yml).
@@ -132,10 +132,10 @@ Integration tests boot the real pipeline via `WebApplicationFactory` against in-
 
 ```
 app/                                   # static frontend (React + Babel in-browser)
-src/TrainingPlatform.Domain/           # entities, enums, domain rules
-src/TrainingPlatform.Application/      # CQRS handlers, validators, services
-src/TrainingPlatform.Infrastructure/   # EF Core, auth, seeding, migrations, AI
-src/TrainingPlatform.Api/              # controllers, middleware, composition root
+src/CodeCraftNet.Domain/           # entities, enums, domain rules
+src/CodeCraftNet.Application/      # CQRS handlers, validators, services
+src/CodeCraftNet.Infrastructure/   # EF Core, auth, seeding, migrations, AI
+src/CodeCraftNet.Api/              # controllers, middleware, composition root
 tests/                                 # xUnit unit + integration tests
 docker/                                # nginx config, one-time SQL helpers
 ```

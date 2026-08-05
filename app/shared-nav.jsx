@@ -1,4 +1,4 @@
-// shared-nav.jsx
+﻿// shared-nav.jsx
 // Sticky top navigation used across Dashboard, Topics, and any other "shell"
 // page. Tabs are real navigations (not in-page state) so refresh/deep-link
 // behaviour matches user expectation.
@@ -38,7 +38,7 @@ function TopNav({ activeTab, apiOnline }) {
             <div className="tp-mark">M</div>
             <div className="font-semibold tracking-tight text-[14.5px]"
                  style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-              Masterly
+              CodeCraft.NET
             </div>
           </a>
           <nav className="hidden md:flex items-center gap-1">

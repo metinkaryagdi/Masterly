@@ -1,4 +1,4 @@
-// challenge-app.jsx
+﻿// challenge-app.jsx
 // IDE-style coding + scenario challenge surface. Wires Challenge.html to the
 // backend's CodingChallengeDto / ScenarioChallengeDto + submission endpoints.
 
@@ -8,7 +8,7 @@ const CHAL_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "ideFont": "JetBrains Mono",
   "fontSize": 12.5,
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -153,7 +153,7 @@ function ChallengeTopBar({ kind, challenge, onExit, elapsedSec, outcome }) {
            style={{ textDecoration: 'none' }}>
           <div className="tp-mark">M</div>
           <span className="font-semibold tracking-tight text-[14.5px]" style={{ color: 'var(--ink)' }}>
-            Masterly
+            CodeCraft.NET
           </span>
         </a>
 
@@ -362,7 +362,7 @@ function IdePanel({ challenge, code, setCode, notes, setNotes, onRun, onSubmit, 
       {/* Toolbar */}
       <div className="ide-toolbar">
         <div className="crumbs">
-          <span>TrainingPlatform.Api</span>
+          <span>CodeCraftNet.Api</span>
           <span className="sep">/</span>
           <span>Controllers</span>
           <span className="sep">/</span>

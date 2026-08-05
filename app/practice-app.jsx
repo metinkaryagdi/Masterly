@@ -6,7 +6,7 @@ const { useState: uS, useEffect: uE, useMemo: uM, useRef: uR } = React;
 const PRACTICE_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "showTimer": true,
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 

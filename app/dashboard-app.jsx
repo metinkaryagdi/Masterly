@@ -1,4 +1,4 @@
-// dashboard-app.jsx
+﻿// dashboard-app.jsx
 // Top-level Dashboard composition: TopNav + grid + tweaks wiring.
 
 const { useState: useSt, useEffect: useEf, useMemo: useMm } = React;
@@ -8,7 +8,7 @@ const DASH_TWEAKS = /*EDITMODE-BEGIN*/{
   "masteryView": "grid",
   "showTrend": true,
   "density": "regular",
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -222,7 +222,7 @@ function App() {
         {/* Footer */}
         <footer className="mt-10 pb-12 flex items-center justify-between text-[11px] font-mono"
                 style={{ color: 'var(--ink-mute)' }}>
-          <span>Masterly · v0.4 beta</span>
+          <span>CodeCraft.NET · v0.4 beta</span>
           <span>GET /api/study-plans/today · GET /api/analytics/dashboard</span>
         </footer>
       </main>

@@ -1,0 +1,6 @@
+﻿@CodeCraftNet.Api_HostAddress = http://localhost:5229
+
+GET {{CodeCraftNet.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

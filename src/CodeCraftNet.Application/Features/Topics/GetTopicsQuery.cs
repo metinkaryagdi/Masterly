@@ -1,0 +1,48 @@
+﻿using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using CodeCraftNet.Application.Abstractions.Persistence;
+using CodeCraftNet.Application.Common.Cqrs;
+
+namespace CodeCraftNet.Application.Features.Topics;
+
+public sealed record GetTopicsQuery : IQuery<IReadOnlyCollection<TopicDto>>;
+
+public sealed class GetTopicsQueryValidator : AbstractValidator<GetTopicsQuery>
+{
+}
+
+public sealed class GetTopicsQueryHandler(ICodeCraftNetDbContext dbContext) : IQueryHandler<GetTopicsQuery, IReadOnlyCollection<TopicDto>>
+{
+    public async Task<IReadOnlyCollection<TopicDto>> Handle(GetTopicsQuery query, CancellationToken cancellationToken)
+    {
+        var topics = await dbContext.Topics
+            .AsNoTracking()
+            .Include(topic => topic.Dependencies)
+            .OrderBy(topic => topic.Name)
+            .ToListAsync(cancellationToken);
+
+        var summaries = await TopicContentSummary.LoadAsync(
+            dbContext,
+            topics.Select(topic => topic.Id).ToList(),
+            cancellationToken);
+
+        return topics
+            .Select(topic =>
+            {
+                var summary = summaries.GetValueOrDefault(topic.Id, TopicContentSummary.Empty);
+                return new TopicDto(
+                    topic.Id,
+                    topic.Name,
+                    topic.Slug,
+                    topic.Description,
+                    topic.Difficulty,
+                    topic.DecayRate,
+                    topic.Dependencies.Select(dependency => dependency.DependsOnTopicId).ToList(),
+                    summary.QuestionCount,
+                    summary.CodingChallengeCount,
+                    summary.ScenarioCount,
+                    summary.SampleQuestions);
+            })
+            .ToList();
+    }
+}

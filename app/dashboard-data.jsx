@@ -1,4 +1,4 @@
-// dashboard-data.jsx
+﻿// dashboard-data.jsx
 // Mock data shaped exactly like the backend DTOs, plus a thin API client
 // that falls back to mocks in demo mode.
 
@@ -511,7 +511,7 @@ The token store is already wired up via \`IRefreshTokenService\`. Your job is th
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace TrainingPlatform.Api.Controllers;
+namespace CodeCraftNet.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
@@ -581,7 +581,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 
-namespace TrainingPlatform.Application.Common.Behaviors;
+namespace CodeCraftNet.Application.Common.Behaviors;
 
 public sealed class IdempotencyBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>

@@ -1,0 +1,55 @@
+﻿# Production overlay. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Layered on top of docker-compose.yml: keeps the shared service definitions
+# (build context, networks, healthchecks) and only overrides what differs in
+# production — required secrets (no insecure defaults), resource limits, and
+# swapping the frontend for the TLS-terminating nginx config.
+#
+# Requires a .env with DB_PASSWORD, JWT_SECRET and CORS_ORIGIN set (see
+# .env.example) and a certificate pair in docker/certs/ (see DEPLOYMENT.md).
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env before deploying to production}
+    # Not reachable from outside the compose network in production.
+    ports: []
+    mem_limit: 512m
+    cpus: 1
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=codecraftnet_db;Username=postgres;Password=${DB_PASSWORD:?Set DB_PASSWORD in .env before deploying to production}"
+      Jwt__SecretKey: ${JWT_SECRET:?Set JWT_SECRET in .env before deploying to production}
+      Cors__AllowedOrigins__0: ${CORS_ORIGIN:?Set CORS_ORIGIN in .env before deploying to production}
+    # Only nginx (TLS terminator + reverse proxy) talks to the api directly;
+    # it is not published to the host/internet on its own in production.
+    ports: []
+    mem_limit: 768m
+    cpus: 1.5
+    pids_limit: 512
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    volumes:
+      - ./app:/usr/share/nginx/html:ro
+      - ./docker/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    mem_limit: 128m
+    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    # Base healthcheck probes plain http:// on "/", which 301s to https here;
+    # --no-check-certificate covers a self-signed cert during initial setup.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--no-check-certificate", "--spider", "https://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

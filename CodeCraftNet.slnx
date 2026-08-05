@@ -1,0 +1,13 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeCraftNet.Api/CodeCraftNet.Api.csproj" />
+    <Project Path="src/CodeCraftNet.Application/CodeCraftNet.Application.csproj" />
+    <Project Path="src/CodeCraftNet.Domain/CodeCraftNet.Domain.csproj" />
+    <Project Path="src/CodeCraftNet.Infrastructure/CodeCraftNet.Infrastructure.csproj" />
+    <Project Path="src/CodeCraftNet.Runner/CodeCraftNet.Runner.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeCraftNet.IntegrationTests/CodeCraftNet.IntegrationTests.csproj" />
+    <Project Path="tests/CodeCraftNet.UnitTests/CodeCraftNet.UnitTests.csproj" />
+  </Folder>
+</Solution>

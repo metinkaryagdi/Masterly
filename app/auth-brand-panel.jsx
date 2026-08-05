@@ -1,4 +1,4 @@
-// auth-brand-panel.jsx
+﻿// auth-brand-panel.jsx
 // Left-side brand panel. Three variants: mastery (default), streak, topics.
 
 const { useEffect, useState } = React;
@@ -180,7 +180,7 @@ function BrandPanel({ variant = 'mastery' }) {
       <div className="relative z-10 px-12 pt-10 flex items-center gap-2.5">
         <div className="tp-mark">M</div>
         <div className="text-[15px] font-semibold tracking-tight" style={{ color: 'var(--ink)', letterSpacing: '-0.015em' }}>
-          Masterly
+          CodeCraft.NET
         </div>
         <div className="ml-2 font-mono text-[10.5px] px-2 py-0.5 rounded-md"
              style={{

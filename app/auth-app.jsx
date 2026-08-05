@@ -1,4 +1,4 @@
-// auth-app.jsx
+﻿// auth-app.jsx
 // Top-level Auth screen: layout + tab toggle + tweaks wiring.
 
 const { useState, useRef, useLayoutEffect, useEffect: useEffect2 } = React;
@@ -7,7 +7,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
   "layout": "split",
   "brandVisual": "mastery",
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -116,7 +116,7 @@ function FormPane({ mode, setMode, apiBase, demoMode, layout }) {
           <div className="flex flex-col items-center mb-7">
             <div className="tp-mark mb-3" style={{ width: 36, height: 36, fontSize: 17, borderRadius: 10 }}>M</div>
             <div className="text-[14px] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
-              Masterly
+              CodeCraft.NET
             </div>
           </div>
         )}

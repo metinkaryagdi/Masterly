@@ -1,4 +1,4 @@
-// settings-app.jsx
+﻿// settings-app.jsx
 // Settings & profile — editable view of everything onboarding captured,
 // plus appearance, notifications, data export, and a guarded delete-account.
 
@@ -6,7 +6,7 @@ const { useState: sS, useEffect: sE, useMemo: sM, useRef: sR } = React;
 
 const SETTINGS_TWEAKS = /*EDITMODE-BEGIN*/{
   "accent": "emerald",
-  "apiBase": "http://localhost:5000",
+  "apiBase": "",
   "demoMode": false
 }/*EDITMODE-END*/;
 
@@ -268,7 +268,7 @@ function App() {
     }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'masterly-export.json';
+    a.href = url; a.download = 'codecraftnet-export.json';
     a.click();
     URL.revokeObjectURL(url);
     flashSaved('data');
@@ -573,7 +573,7 @@ function App() {
             {/* Footer */}
             <footer className="pt-2 pb-8 flex items-center justify-between text-[11px] font-mono"
                     style={{ color: 'var(--ink-mute)' }}>
-              <span>Masterly · settings</span>
+              <span>CodeCraft.NET · settings</span>
               <span>local-only · backend has no GET/PATCH /api/users/me yet</span>
             </footer>
           </div>
