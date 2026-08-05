@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using CodeCraftNet.Api.Common;
+using CodeCraftNet.Api.RateLimiting;
 using CodeCraftNet.Application.Common.Cqrs;
 using CodeCraftNet.Application.Features.Challenges;
 
@@ -52,6 +54,7 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     }
 
     [HttpPost("coding/{id:guid}/run")]
+    [EnableRateLimiting(RateLimitPolicies.CodeExecution)]
     [ProducesResponseType<CodeRunDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CodeRunDto>> RunCodingChallenge(Guid id, RunCodingChallengeRequest request, CancellationToken cancellationToken)
@@ -64,6 +67,7 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     }
 
     [HttpPost("coding/submissions")]
+    [EnableRateLimiting(RateLimitPolicies.CodeExecution)]
     [ProducesResponseType<SubmissionDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<SubmissionDto>> SubmitCodingChallenge(SubmitCodingChallengeRequest request, CancellationToken cancellationToken)
     {
@@ -75,6 +79,7 @@ public sealed class ChallengesController(ICommandDispatcher commandDispatcher, I
     }
 
     [HttpPost("scenario/submissions")]
+    [EnableRateLimiting(RateLimitPolicies.CodeExecution)]
     [ProducesResponseType<SubmissionDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<SubmissionDto>> SubmitScenarioChallenge(SubmitScenarioChallengeRequest request, CancellationToken cancellationToken)
     {

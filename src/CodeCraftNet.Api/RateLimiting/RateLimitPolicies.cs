@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -19,11 +19,20 @@ public static class RateLimitPolicies
     /// </summary>
     public const string Auth = "auth";
 
+    /// <summary>
+    /// Throttles code execution and challenge submission endpoints to prevent
+    /// runner container resource exhaustion or DoS attacks.
+    /// </summary>
+    public const string CodeExecution = "code-execution";
+
     private const int PermitsPerWindow = 5;
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
     private const int AuthPermitsPerWindow = 10;
     private static readonly TimeSpan AuthWindow = TimeSpan.FromMinutes(1);
+
+    private const int CodeExecutionPermitsPerWindow = 12;
+    private static readonly TimeSpan CodeExecutionWindow = TimeSpan.FromMinutes(1);
 
     public static IServiceCollection AddApiRateLimiting(this IServiceCollection services)
     {
@@ -54,6 +63,21 @@ public static class RateLimitPolicies
                 {
                     PermitLimit = AuthPermitsPerWindow,
                     Window = AuthWindow,
+                    QueueLimit = 0,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                });
+            });
+
+            options.AddPolicy(CodeExecution, httpContext =>
+            {
+                var partitionKey = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                                   ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                   ?? "anonymous";
+
+                return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = CodeExecutionPermitsPerWindow,
+                    Window = CodeExecutionWindow,
                     QueueLimit = 0,
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst
                 });

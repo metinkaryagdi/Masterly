@@ -1,4 +1,4 @@
-﻿// settings-app.jsx
+// settings-app.jsx
 // Settings & profile — editable view of everything onboarding captured,
 // plus appearance, notifications, data export, and a guarded delete-account.
 
@@ -313,7 +313,7 @@ function App() {
                    document.getElementById(s.id)?.scrollIntoView({ block: 'start' });
                  }}>
                 <span className="lbl-num">{String(i + 1).padStart(2, '0')}</span>
-                <span dangerouslySetInnerHTML={{ __html: s.label }} />
+                <span>{s.label}</span>
               </a>
             ))}
           </nav>
